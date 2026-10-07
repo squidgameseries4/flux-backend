@@ -35,8 +35,9 @@ router.post("/login", async (req, res) => {
   const handle = String(req.body.handle || "").trim();
   const password = String(req.body.password || "");
   const user = await db.prepare("SELECT * FROM users WHERE lower(handle)=lower(?)").get(handle);
-  if (!user || !checkPassword(password, user.password_hash))
-    return res.status(401).json({ ok: false, error: "Wrong handle or password" });
+  if (!user) return res.status(404).json({ ok: false, error: "No account with that username" });
+if (!checkPassword(password, user.password_hash))
+  return res.status(401).json({ ok: false, error: "Wrong password" });
   res.json({ ok: true, token: signToken(user), user: publicUser(user) });
 });
 
