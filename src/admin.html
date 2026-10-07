@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flux Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif}
+:root{--bg:#0f1115;--card:#171a21;--card2:#1e222c;--line:#262c38;--txt:#e8eaf0;--mut:#9aa3b5;--vio:#7C6CF0;--red:#FF3B5C;--grn:#2fbf71}
+body{background:var(--bg);color:var(--txt);min-height:100vh}
+/* login */
+#login{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(600px 400px at 50% 30%,#1c2140,#0f1115)}
+.lcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px;width:min(380px,92vw);text-align:center}
+.lcard h1{font-size:28px;margin-bottom:4px}.lcard h1 em{color:var(--vio);font-style:normal}
+.lcard p{color:var(--mut);font-size:13px;margin-bottom:20px}
+.lcard input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:15px;margin-bottom:12px;outline:none}
+.lcard input:focus{border-color:var(--vio)}
+.btn{background:var(--vio);color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;width:100%}
+.btn:hover{filter:brightness(1.1)}
+#lerr{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}
+/* layout */
+#app{display:none}
+.side{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--card);border-right:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:4px}
+.side .logo{font-size:22px;font-weight:800;padding:4px 12px 18px}.side .logo em{color:var(--vio);font-style:normal}
+.navbtn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;color:var(--mut);font-size:14px;font-weight:600;cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.navbtn:hover{background:var(--card2);color:var(--txt)}
+.navbtn.on{background:rgba(124,108,240,.15);color:var(--txt)}
+.navbtn .cnt{margin-left:auto;background:var(--card2);border-radius:99px;font-size:11px;padding:2px 8px;color:var(--mut)}
+.side .foot{margin-top:auto;padding:10px 12px;color:var(--mut);font-size:12px}
+.side .foot button{background:none;border:0;color:var(--red);cursor:pointer;font-size:13px;font-weight:600}
+.main{margin-left:220px;padding:28px;max-width:1200px}
+.main h2{font-size:22px;margin-bottom:18px}
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card .v{font-size:26px;font-weight:800}.card .l{color:var(--mut);font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+.panel h3{font-size:15px;margin-bottom:14px}
+/* chart */
+.bars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:6px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
+.bar .fill{width:70%;max-width:26px;background:linear-gradient(180deg,var(--vio),#4a3fb5);border-radius:4px 4px 0 0;min-height:3px}
+.bar .d{font-size:10px;color:var(--mut)}
+/* toolbar + table */
+.toolbar{display:flex;gap:10px;margin-bottom:14px}
+.toolbar input{flex:1;max-width:340px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:14px;outline:none}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.02)}
+.mut{color:var(--mut);font-size:12px}
+.thumb{width:72px;height:42px;object-fit:cover;border-radius:8px;background:#000}
+.avt{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--vio),#4a3fb5);display:inline-grid;place-items:center;font-weight:800;font-size:14px;color:#fff;vertical-align:middle;margin-right:8px}
+.del{background:rgba(255,59,92,.12);color:var(--red);border:0;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.del:hover{background:rgba(255,59,92,.25)}
+.pager{display:flex;align-items:center;gap:12px;margin-top:14px;color:var(--mut);font-size:13px}
+.pager button{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px}
+.pager button:disabled{opacity:.4;cursor:default}
+.empty{text-align:center;color:var(--mut);padding:40px}
+@media(max-width:760px){.side{width:64px}.side .logo,.navbtn span.t,.navbtn .cnt,.side .foot{display:none}.main{margin-left:64px;padding:16px}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="lcard">
+    <h1>Flux<em>.</em> Admin</h1>
+    <p>Enter your admin key to manage the backend</p>
+    <input id="key" type="password" placeholder="Admin key" autocomplete="off">
+    <button class="btn" onclick="doLogin()">Open dashboard</button>
+    <div id="lerr"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="side">
+    <div class="logo">Flux<em>.</em></div>
+    <button class="navbtn on" data-p="overview"><span>📊</span><span class="t">Overview</span></button>
+    <button class="navbtn" data-p="users"><span>👥</span><span class="t">Users</span><span class="cnt" id="c-users"></span></button>
+    <button class="navbtn" data-p="videos"><span>🎬</span><span class="t">Videos</span><span class="cnt" id="c-videos"></span></button>
+    <button class="navbtn" data-p="shorts"><span>⚡</span><span class="t">Shorts</span><span class="cnt" id="c-shorts"></span></button>
+    <button class="navbtn" data-p="posts"><span>📝</span><span class="t">Posts</span><span class="cnt" id="c-posts"></span></button>
+    <button class="navbtn" data-p="comments"><span>💬</span><span class="t">Comments</span></button>
+    <button class="navbtn" data-p="messages"><span>✉️</span><span class="t">Messages</span></button>
+    <div class="foot"><button onclick="logout()">Log out</button></div>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+
+<script>
+let page='overview', q='', off=0; const LIM=25;
+const H=()=>({'x-admin-token':sessionStorage.getItem('fat')});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dt=t=>new Date(t).toLocaleString();
+async function api(p,o={}){
+  o.headers={...(o.headers||{}),...H()};
+  const r=await fetch('/api/admin/'+p,o);
+  const j=await r.json().catch(()=>({ok:false}));
+  if(r.status===401){logout();throw 'auth';}
+  return j;
+}
+async function doLogin(){
+  const err=document.getElementById('lerr');err.textContent='';
+  try{
+    const key=document.getElementById('key').value;
+    const r=await fetch('/api/admin/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key})});
+    const j=await r.json();
+    if(j.ok){sessionStorage.setItem('fat',j.token);enter();}
+    else err.textContent=j.error||'Login failed';
+  }catch(e){
+    err.textContent='Cannot reach the server. Keep the terminal running and open http://localhost:3000/admin (not the file itself).';
+  }
+}
+function logout(){sessionStorage.removeItem('fat');location.reload();}
+function enter(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>{page=b.dataset.p;q='';off=0;
+    document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');render();});
+  render();
+}
+async function render(){
+  const m=document.getElementById('main');
+  if(page==='overview')return vOverview(m);
+  const map={users:['users','u'],videos:['videos','v'],shorts:['shorts','s'],posts:['posts','p'],comments:['comments','c'],messages:['messages','m']};
+  const [ep]=map[page];
+  const j=await api(`${ep}?q=${encodeURIComponent(q)}&limit=${LIM}&offset=${off}`);
+  if(!j.ok)return;
+  const rows=j[ep]||[];
+  const titles={users:'Users',videos:'Videos',shorts:'Shorts',posts:'Posts',comments:'Comments',messages:'Spaces messages'};
+  let h=`<h2>${titles[page]}</h2><div class="panel"><div class="toolbar">
+    <input id="sq" placeholder="Search ${titles[page].toLowerCase()}…" value="${esc(q)}"></div>`;
+  if(!rows.length)h+='<div class="empty">Nothing here yet.</div>';
+  else{
+    h+='<table><thead><tr>'+thead()+'</tr></thead><tbody>';
+    for(const r of rows)h+='<tr>'+trow(r)+'</tr>';
+    h+='</tbody></table>';
+    const pages=Math.ceil(j.total/LIM), cur=Math.floor(off/LIM)+1;
+    h+=`<div class="pager"><button ${off===0?'disabled':''} onclick="go(-1)">← Prev</button>
+      <span>Page ${cur} of ${Math.max(pages,1)} · ${j.total} total</span>
+      <button ${off+LIM>=j.total?'disabled':''} onclick="go(1)">Next →</button></div>`;
+  }
+  h+='</div>';m.innerHTML=h;
+  const sq=document.getElementById('sq');
+  sq.onkeydown=e=>{if(e.key==='Enter'){q=sq.value;off=0;render();}};
+}
+function go(d){off=Math.max(0,off+d*LIM);render();}
+function thead(){
+  return {users:'<th>User</th><th>Joined</th><th>Videos</th><th>Shorts</th><th></th>',
+    videos:'<th></th><th>Title</th><th>Author</th><th>Views</th><th>Date</th><th></th>',
+    shorts:'<th></th><th>Caption</th><th>Author</th><th>Views</th><th>Date</th><th></th>',
+    posts:'<th>Text</th><th>Author</th><th>Likes</th><th>Date</th><th></th>',
+    comments:'<th>Text</th><th>Author</th><th>On</th><th>Date</th><th></th>',
+    messages:'<th>Text</th><th>Author</th><th>File</th><th>Date</th><th></th>'}[page];
+}
+function trow(r){
+  const D=id=>`<button class="del" onclick="del('${page}','${id}')">Delete</button>`;
+  const au=a=>a?`<span class="avt">${esc(a.name[0]||'?')}</span>${esc(a.name)}<div class="mut">${esc(a.handle)}</div>`:'<span class="mut">—</span>';
+  if(page==='users')return `<td><span class="avt">${esc(r.name[0]||'?')}</span>${esc(r.name)}<div class="mut">${esc(r.handle)}</div></td>
+    <td class="mut">${dt(r.created_at)}</td><td>${r.videos}</td><td>${r.shorts}</td><td>${D(r.id)}</td>`;
+  if(page==='videos'||page==='shorts'){
+    const t=r.title||r.caption, th=r.thumb_url||'';
+    return `<td>${th?`<img class="thumb" src="${esc(th)}">`:'<div class="thumb"></div>'}</td>
+      <td>${esc(t)}<div class="mut">${esc((r.description||'').slice(0,60))}</div></td><td>${au(r.author)}</td>
+      <td>${r.views}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
+  }
+  if(page==='posts')return `<td>${esc(r.text.slice(0,120))}</td><td>${au(r.author)}</td><td>${r.likes??'—'}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
+  if(page==='comments')return `<td>${esc(r.text.slice(0,120))}</td><td>${au(r.author)}</td><td class="mut">${esc(r.target_type)} #${r.target_id}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
+  if(page==='messages')return `<td>${esc((r.text||'').slice(0,120))||'<span class="mut">—</span>'}</td><td>${au(r.author)}</td><td class="mut">${r.file_type||'—'}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
+  return '';
+}
+async function del(kind,id){
+  if(!confirm('Delete this permanently?'))return;
+  const j=await api(`${kind}/${id}`,{method:'DELETE'});
+  if(j.ok)render();else alert(j.error||'Failed');
+}
+async function vOverview(m){
+  const j=await api('stats');if(!j.ok)return;
+  const s=j.stats;
+  for(const [k,id] of [['users','c-users'],['videos','c-videos'],['shorts','c-shorts'],['posts','c-posts']]){
+    const e=document.getElementById(id);if(e)e.textContent=s[k];
+  }
+  const gb=(s.storage_bytes/1073741824).toFixed(2);
+  const card=(v,l)=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  const max=Math.max(1,...j.signups_by_day.map(d=>d.n));
+  m.innerHTML=`<h2>Overview</h2>
+  <div class="cards">${card(s.users,'Users')}${card(s.videos,'Videos')}${card(s.shorts,'Shorts')}${card(s.posts,'Posts')}
+  ${card(s.comments,'Comments')}${card(s.likes,'Likes')}${card(s.subscriptions,'Follows')}${card(s.messages,'Chat msgs')}${card(s.servers,'Servers')}${card(gb+' GB','Storage')}</div>
+  <div class="panel"><h3>New users — last 14 days <span class="mut">· engine: ${esc(s.engine)}</span></h3>
+  <div class="bars">${j.signups_by_day.map(d=>`<div class="bar" title="${d.n} users"><div class="fill" style="height:${Math.round(d.n/max*110)}px"></div><div class="d">${d.day}</div></div>`).join('')}</div></div>
+  <div class="panel"><h3>Quick actions</h3><div class="mut">Use the sidebar to browse and moderate users, videos, shorts, posts, comments and Spaces messages. Deleting a user removes everything they made.</div></div>`;
+}
+document.getElementById('key').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+if(sessionStorage.getItem('fat'))enter();
+</script>
+</body>
+</html>
