@@ -76,7 +76,9 @@ app.get(["/@:handle","/c/:handle"], async (req, res) => {
     res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(u.name)} on Flux</title><style>
 *{box-sizing:border-box;margin:0}body{background:#0E0F13;color:#fff;font-family:system-ui,sans-serif}
 .wrap{max-width:1000px;margin:auto;padding:16px 20px 40px}
-.brand{color:#7C6CF0;font-weight:800;font-size:14px;letter-spacing:.5px;margin-bottom:12px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:1000px;margin:auto}
+.brand{color:#7C6CF0;font-weight:800;font-size:15px;letter-spacing:.5px}
+.sharebtn{background:none;border:0;color:#cfd2dc;cursor:pointer;padding:8px}
 .banner{width:100%;max-height:220px;overflow:hidden;background:#17181d}.banner img{width:100%;height:100%;max-height:220px;object-fit:cover;display:block}
 .chead{display:flex;gap:16px;align-items:flex-start}
 .av{width:88px;height:88px;border-radius:50%;object-fit:cover;display:grid;place-items:center;font-size:36px;font-weight:800;flex:none}
@@ -98,7 +100,7 @@ h2{font-size:16px;margin:22px 0 12px;color:#cfd2dc}
 .post{background:#17181d;border-radius:12px;padding:14px;margin-bottom:12px}.phead{display:flex;align-items:center;gap:10px;margin-bottom:8px}.post p{font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:#e6e8ee}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#26272e;color:#fff;padding:12px 20px;border-radius:99px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-</style></head><body>${u.banner_url?`<div class="banner"><img src="${esc(u.banner_url)}" alt=""></div>`:``}<div class="wrap"><div class="brand">FLUX</div>
+</style></head><body><div class="topbar"><span class="brand">FLUX</span><button class="sharebtn" onclick="sharePage()" aria-label="Share channel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg></button></div>${u.banner_url?`<div class="banner"><img src="${esc(u.banner_url)}" alt=""></div>`:``}<div class="wrap">
 <div class="chead">${av}<div class="cinfo"><h1>${esc(u.name)}</h1><div class="mut">${esc(u.handle)} &middot; ${fmt(subs)} subscribers &middot; ${videos.length + shorts.length} videos</div>${bioHtml}</div><button class="subbtn" onclick="sub()">Subscribe</button></div>
 <div class="tabs"><button class="tab on" data-k="home" onclick="tab('home')">Home</button><button class="tab" data-k="videos" onclick="tab('videos')">Videos</button><button class="tab" data-k="shorts" onclick="tab('shorts')">Shorts</button><button class="tab" data-k="playlists" onclick="tab('playlists')">Playlists</button><button class="tab" data-k="posts" onclick="tab('posts')">Posts</button></div>
 <div class="pane" id="pane-home"><h2>Latest videos</h2>${videos.length?`<div class="grid">${videos.slice(0,6).map(vcard).join('')}</div>`:'<div class="empty">No videos yet.</div>'}<h2>Shorts</h2>${shorts.length?`<div class="grid shorts">${shorts.slice(0,6).map(scard).join('')}</div>`:'<div class="empty">No shorts yet.</div>'}</div>
@@ -110,6 +112,7 @@ h2{font-size:16px;margin:22px 0 12px;color:#cfd2dc}
 <script>
 function tab(k){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.k===k));document.querySelectorAll('.pane').forEach(p=>p.style.display=p.id==='pane-'+k?'':'none');window.scrollTo(0,0);}
 function bd(f){document.getElementById('bshort').style.display=f?'none':'';document.getElementById('bfull').style.display=f?'':'none';}
+function sharePage(){var u=location.href;if(navigator.share){navigator.share({title:document.title,url:u}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(u);var t=document.getElementById('toast');t.textContent='Link copied';t.className='show';setTimeout(function(){t.className='';},2000);}}
 function sub(){var t=document.getElementById('toast');t.textContent='Open the Flux app and log in to subscribe to this channel';t.className='show';setTimeout(function(){t.className='';},2600);}
 </script></body></html>`);
   } catch (e) { console.error(e); res.status(500).send("Server error"); }
