@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
   handle TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   avatar_url TEXT DEFAULT '',
+  banner_url TEXT DEFAULT '',
   bio TEXT DEFAULT '',
   created_at BIGINT NOT NULL
 );
@@ -154,6 +155,7 @@ if (process.env.PG_MEM === "1") {
   db = makePg(pool, true);
   db.ready = (async () => {
     for (const st of splitStatements(schema("SERIAL PRIMARY KEY"))) await pool.query(st);
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url TEXT DEFAULT ''");
   })();
 } else if (process.env.DATABASE_URL) {
   /* Real Postgres. */
@@ -172,6 +174,7 @@ if (process.env.PG_MEM === "1") {
   const sq = new DatabaseSync(DB_PATH);
   sq.exec("PRAGMA journal_mode = WAL;");
   sq.exec(schema("INTEGER PRIMARY KEY AUTOINCREMENT"));
+  try { sq.exec("ALTER TABLE users ADD COLUMN banner_url TEXT DEFAULT ''"); } catch (e) {}
   db = {
     isPg: false,
     prepare(sql) {
