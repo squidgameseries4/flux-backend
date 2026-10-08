@@ -24,6 +24,15 @@ function rmFile(url) {
   try { fs.unlinkSync(path.join(UPLOAD_DIR, path.basename(url))); } catch (e) { /* ignore */ }
 }
 
+/* ---------- image upload (avatar / banner) ---------- */
+
+// POST /api/upload/image  (multipart: file) -> { ok, url }
+router.post("/upload/image", required, upload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: "No file" });
+  if (!/^image\//.test(req.file.mimetype)) { rmFile("/uploads/" + req.file.filename); return res.status(400).json({ ok: false, error: "Only images allowed" }); }
+  res.json({ ok: true, url: fileUrl(req, req.file) });
+});
+
 /* ---------- videos ---------- */
 
 // POST /api/videos  (multipart: file, thumbnail?, title, description, duration, visibility, made_for_kids, location)
