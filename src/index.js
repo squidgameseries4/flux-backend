@@ -40,6 +40,46 @@ app.use((err, req, res, next) => {
 });
 
 
+/* ---------- landing page ---------- */
+app.get("/", async (req, res) => {
+  const esc = x => String(x ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+  let chans = [];
+  try {
+    chans = await db.prepare("SELECT u.*, (SELECT COUNT(*) c FROM subscriptions WHERE channel_id=u.id) sc FROM users u ORDER BY sc DESC, u.created_at DESC LIMIT 12").all();
+  } catch (e) {}
+  const cards = chans.map(c => {
+    const av = c.avatar_url ? `<img src="${esc(c.avatar_url)}" alt="">` : `<div class="cav">${esc((c.name || "?")[0].toUpperCase())}</div>`;
+    return `<a class="card" href="/@${esc(c.handle.replace(/^@/, ""))}">${av}<div><b>${esc(c.name)}</b><span>@${esc(c.handle.replace(/^@/, ""))} \u00b7 ${c.sc} subscribers</span></div></a>`;
+  }).join("");
+  res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flux \u2014 Watch. Create. Share.</title><style>
+*{box-sizing:border-box}body{margin:0;background:#0E0F13;color:#fff;font-family:Inter,system-ui,sans-serif}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;max-width:1100px;margin:auto}
+.brand{color:#7C6CF0;font-weight:800;font-size:16px;letter-spacing:.5px;text-decoration:none}
+.hero{max-width:1100px;margin:auto;padding:70px 22px 40px;text-align:center}
+.hero h1{font-size:42px;margin:0 0 12px;line-height:1.15}
+.hero h1 span{color:#7C6CF0}
+.hero p{color:#9aa0ae;font-size:17px;max-width:560px;margin:0 auto 28px}
+.cta{display:inline-block;background:#7C6CF0;color:#fff;font-weight:700;padding:14px 34px;border-radius:999px;text-decoration:none;font-size:16px}
+.sec{max-width:1100px;margin:auto;padding:30px 22px 60px}
+.sec h2{font-size:20px;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.card{display:flex;gap:12px;align-items:center;background:#17181d;border-radius:14px;padding:14px;text-decoration:none;color:#fff}
+.card img,.cav{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none}
+.cav{display:grid;place-items:center;background:#7C6CF0;font-weight:800;font-size:22px}
+.card b{display:block;font-size:15px}
+.card span{color:#9aa0ae;font-size:13px}
+.empty{color:#9aa0ae;text-align:center;padding:30px}
+.foot{text-align:center;color:#5b606c;font-size:13px;padding:26px}
+</style></head><body>
+<div class="topbar"><a class="brand" href="/">FLUX</a></div>
+<div class="hero"><h1>Watch. Create. <span>Share.</span></h1>
+<p>Flux is a home for creators \u2014 upload videos and shorts, build your channel, and grow your audience.</p>
+<a class="cta" href="#channels">Browse channels</a></div>
+<div class="sec" id="channels"><h2>Channels</h2><div class="grid">${cards || `<div class="empty">No channels yet \u2014 be the first.</div>`}</div></div>
+<div class="foot">\u00a9 2026 Flux</div></body></html>`);
+});
+
 // public shareable channel page: /@handle (YouTube-style) and /c/:handle
 app.get(["/@:handle","/c/:handle"], async (req, res) => {
   try {
@@ -100,7 +140,7 @@ h2{font-size:16px;margin:22px 0 12px;color:#cfd2dc}
 .post{background:#17181d;border-radius:12px;padding:14px;margin-bottom:12px}.phead{display:flex;align-items:center;gap:10px;margin-bottom:8px}.post p{font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:#e6e8ee}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#26272e;color:#fff;padding:12px 20px;border-radius:99px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-</style></head><body><div class="topbar"><span class="brand">FLUX</span><button class="sharebtn" onclick="sharePage()" aria-label="Share channel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg></button></div>${u.banner_url?`<div class="banner"><img src="${esc(u.banner_url)}" alt=""></div>`:``}<div class="wrap">
+</style></head><body><div class="topbar"><a class="brand" href="/" style="text-decoration:none">FLUX</a><button class="sharebtn" onclick="sharePage()" aria-label="Share channel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg></button></div>${u.banner_url?`<div class="banner"><img src="${esc(u.banner_url)}" alt=""></div>`:``}<div class="wrap">
 <div class="chead">${av}<div class="cinfo"><h1>${esc(u.name)}</h1><div class="mut">${esc(u.handle)} &middot; ${fmt(subs)} subscribers &middot; ${videos.length + shorts.length} videos</div>${bioHtml}</div><button class="subbtn" onclick="sub()">Subscribe</button></div>
 <div class="tabs"><button class="tab on" data-k="home" onclick="tab('home')">Home</button><button class="tab" data-k="videos" onclick="tab('videos')">Videos</button><button class="tab" data-k="shorts" onclick="tab('shorts')">Shorts</button><button class="tab" data-k="playlists" onclick="tab('playlists')">Playlists</button><button class="tab" data-k="posts" onclick="tab('posts')">Posts</button></div>
 <div class="pane" id="pane-home"><h2>Latest videos</h2>${videos.length?`<div class="grid">${videos.slice(0,6).map(vcard).join('')}</div>`:'<div class="empty">No videos yet.</div>'}<h2>Shorts</h2>${shorts.length?`<div class="grid shorts">${shorts.slice(0,6).map(scard).join('')}</div>`:'<div class="empty">No shorts yet.</div>'}</div>
