@@ -21,6 +21,9 @@ app.get("/api/health", (req, res) => res.json({ ok: true, app: "flux-backend", v
 // admin dashboard website
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 
+// privacy policy (Play Store listing)
+app.get("/privacy", (req, res) => res.sendFile(path.join(__dirname, "privacy.html")));
+
 app.use("/api/auth", require("./routes/auth").router);
 app.use("/api", require("./routes/content").router);
 app.use("/api", require("./routes/engage").router);
