@@ -2,12 +2,10 @@
 /* Videos, shorts, posts. */
 
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 const db = require("../db");
 const { required, optional } = require("../auth");
 const { publicUser } = require("./auth");
-const { upload, fileUrl, UPLOAD_DIR } = require("../uploads");
+const { upload, fileUrl, deleteFile } = require("../uploads");
 
 const router = express.Router();
 const now = () => Date.now();
@@ -20,8 +18,8 @@ async function withCounts(row, type, meId) {
   return { ...row, author, likes, comments, liked_by_me: liked };
 }
 function rmFile(url) {
-  if (!url || !url.startsWith("/uploads/")) return;
-  try { fs.unlinkSync(path.join(UPLOAD_DIR, path.basename(url))); } catch (e) { /* ignore */ }
+  /* fire-and-forget: deleteFile is best-effort and never throws */
+  deleteFile(url).catch(() => {});
 }
 
 /* ---------- image upload (avatar / banner) ---------- */
@@ -30,7 +28,7 @@ function rmFile(url) {
 router.post("/upload/image", required, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ ok: false, error: "No file" });
   if (!/^image\//.test(req.file.mimetype)) { rmFile("/uploads/" + req.file.filename); return res.status(400).json({ ok: false, error: "Only images allowed" }); }
-  res.json({ ok: true, url: fileUrl(req, req.file) });
+  res.json({ ok: true, url: await fileUrl(req, req.file) });
 });
 
 /* ---------- videos ---------- */
@@ -46,7 +44,7 @@ router.post("/videos", required, upload.fields([{ name: "file", maxCount: 1 }, {
     VALUES (?,?,?,?,?,?,?,?,?,?)`).run(
     req.user.id, title,
     String(req.body.description || "").slice(0, 2000),
-    fileUrl(req, f), th ? fileUrl(req, th) : "",
+    await fileUrl(req, f), th ? await fileUrl(req, th) : "",
     parseFloat(req.body.duration) || 0,
     String(req.body.visibility || "Public").slice(0, 20),
     req.body.made_for_kids ? 1 : 0,
@@ -103,7 +101,7 @@ router.post("/shorts", required, upload.fields([{ name: "file", maxCount: 1 }, {
     VALUES (?,?,?,?,?,?,?,?)`).run(
     req.user.id, caption,
     String(req.body.description || "").slice(0, 2000),
-    fileUrl(req, f), th ? fileUrl(req, th) : "",
+    await fileUrl(req, f), th ? await fileUrl(req, th) : "",
     parseFloat(req.body.duration) || 0,
     String(req.body.visibility || "Public").slice(0, 20),
     now()
