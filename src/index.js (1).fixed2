@@ -1,5 +1,5 @@
 "use strict";
-/* Flux backend — Express server. */
+/* Flox backend — Express server. */
 
 const express = require("express");
 const cors = require("cors");
@@ -55,7 +55,7 @@ app.get("/", async (req, res) => {
     return `<a class="card" href="/@${esc(c.handle.replace(/^@/, ""))}">${av}<div><b>${esc(c.name)}</b><span>@${esc(c.handle.replace(/^@/, ""))} \u00b7 ${c.sc} subscribers</span></div></a>`;
   }).join("");
   res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flux \u2014 Watch. Create. Share.</title><style>
+<title>Flox \u2014 Watch. Create. Share.</title><style>
 *{box-sizing:border-box}body{margin:0;background:#0E0F13;color:#fff;font-family:Inter,system-ui,sans-serif}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;max-width:1100px;margin:auto}
 .brand{color:#7C6CF0;font-weight:800;font-size:16px;letter-spacing:.5px;text-decoration:none}
@@ -77,10 +77,10 @@ app.get("/", async (req, res) => {
 </style></head><body>
 <div class="topbar"><a class="brand" href="/">FLUX</a></div>
 <div class="hero"><h1>Watch. Create. <span>Share.</span></h1>
-<p>Flux is a home for creators \u2014 upload videos and shorts, build your channel, and grow your audience.</p>
+<p>Flox is a home for creators \u2014 upload videos and shorts, build your channel, and grow your audience.</p>
 <a class="cta" href="#channels">Browse channels</a></div>
 <div class="sec" id="channels"><h2>Channels</h2><div class="grid">${cards || `<div class="empty">No channels yet \u2014 be the first.</div>`}</div></div>
-<div class="foot">\u00a9 2026 Flux</div></body></html>`);
+<div class="foot">\u00a9 2026 Flox</div></body></html>`);
 });
 
 // public shareable channel page: /@handle (YouTube-style) and /c/:handle
@@ -116,7 +116,7 @@ app.get(["/@:handle","/c/:handle"], async (req, res) => {
     const plHtml = pls.length ? pls.map(pl => `<div class="pl"><div class="plhead"><b>${esc(pl.name)}</b><small>${pl.items.length} videos</small></div>` +
       (pl.items.length ? `<div class="grid">${pl.items.map(v => `<div class="card"><video src="${esc(v.file_url)}" ${v.thumb_url?`poster="${esc(v.thumb_url)}"`:''} controls preload="none"></video><b>${esc(v.title)}</b></div>`).join('')}</div>` : `<div class="empty">Empty playlist.</div>`) + `</div>`).join('')
       : `<div class="empty">No playlists yet.</div>`;
-    res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(u.name)} on Flux</title><style>
+    res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(u.name)} on Flox</title><style>
 *{box-sizing:border-box;margin:0}body{background:#0E0F13;color:#fff;font-family:system-ui,sans-serif}
 .wrap{max-width:1000px;margin:auto;padding:16px 20px 40px}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:1000px;margin:auto}
@@ -156,7 +156,7 @@ h2{font-size:16px;margin:22px 0 12px;color:#cfd2dc}
 function tab(k){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.k===k));document.querySelectorAll('.pane').forEach(p=>p.style.display=p.id==='pane-'+k?'':'none');window.scrollTo(0,0);}
 function bd(f){document.getElementById('bshort').style.display=f?'none':'';document.getElementById('bfull').style.display=f?'':'none';}
 function sharePage(){var u=location.href;if(navigator.share){navigator.share({title:document.title,url:u}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(u);var t=document.getElementById('toast');t.textContent='Link copied';t.className='show';setTimeout(function(){t.className='';},2000);}}
-function sub(){var t=document.getElementById('toast');t.textContent='Open the Flux app and log in to subscribe to this channel';t.className='show';setTimeout(function(){t.className='';},2600);}
+function sub(){var t=document.getElementById('toast');t.textContent='Open the Flox app and log in to subscribe to this channel';t.className='show';setTimeout(function(){t.className='';},2600);}
 </script></body></html>`);
   } catch (e) { console.error(e); res.status(500).send("Server error"); }
 });
@@ -165,6 +165,6 @@ app.use((req, res) => res.status(404).json({ ok: false, error: "Not found: " + r
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 if (require.main === module) {
-  db.ready.then(() => app.listen(PORT, () => console.log(`Flux backend listening on http://localhost:${PORT}`)));
+  db.ready.then(() => app.listen(PORT, () => console.log(`Flox backend listening on http://localhost:${PORT}`)));
 }
 module.exports = app;
