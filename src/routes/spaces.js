@@ -23,11 +23,13 @@ router.get("/servers", required, async (req, res) => {
   res.json({ ok: true, servers: rows });
 });
 
-// POST /api/servers {name}
+// POST /api/servers {name, description, is_public}
 router.post("/servers", required, async (req, res) => {
   const name = String(req.body.name || "").trim().slice(0, 60);
   if (!name) return res.status(400).json({ ok: false, error: "Name is required" });
-  const r = await db.prepare("INSERT INTO servers (owner_id,name,created_at) VALUES (?,?,?)").run(req.user.id, name, now());
+  const desc = String(req.body.description || "").trim().slice(0, 280);
+  const pub = req.body.is_public === false || req.body.is_public === 0 ? 0 : 1;
+  const r = await db.prepare("INSERT INTO servers (owner_id,name,description,is_public,created_at) VALUES (?,?,?,?,?)").run(req.user.id, name, desc, pub, now());
   const server = await db.prepare("SELECT * FROM servers WHERE id=?").get(r.lastInsertRowid);
   // default channels, like a fresh Discord server
   for (const [n, k] of [["welcome", "text"], ["general-chat", "text"], ["clips", "text"]])
@@ -41,6 +43,45 @@ router.delete("/servers/:id", required, async (req, res) => {
   if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
   if (s.owner_id !== req.user.id) return res.status(403).json({ ok: false, error: "Only the owner can delete this server" });
   await db.prepare("DELETE FROM servers WHERE id=?").run(s.id);
+  res.json({ ok: true });
+});
+
+// GET /api/servers/discover?q= — public community directory (no login needed)
+router.get("/servers/discover", async (req, res) => {
+  const q = String(req.query.q || "").trim().slice(0, 60);
+  let rows;
+  if (q) {
+    const like = "%" + q.replace(/[%_]/g, "") + "%";
+    rows = await db.prepare(
+      "SELECT s.*, u.handle AS owner_handle FROM servers s LEFT JOIN users u ON u.id=s.owner_id WHERE s.is_public=1 AND (s.name LIKE ? OR s.description LIKE ?) ORDER BY s.created_at DESC LIMIT 50"
+    ).all(like, like);
+  } else {
+    rows = await db.prepare(
+      "SELECT s.*, u.handle AS owner_handle FROM servers s LEFT JOIN users u ON u.id=s.owner_id WHERE s.is_public=1 ORDER BY s.created_at DESC LIMIT 50"
+    ).all();
+  }
+  // member counts
+  for (const s of rows) {
+    const mc = await db.prepare("SELECT COUNT(*) AS n FROM server_members WHERE server_id=?").get(s.id);
+    s.member_count = (mc ? mc.n : 0) + 1; // +1 for owner
+  }
+  res.json({ ok: true, servers: rows });
+});
+
+// POST /api/servers/:id/join — join a public server
+router.post("/servers/:id/join", required, async (req, res) => {
+  const s = await db.prepare("SELECT * FROM servers WHERE id=?").get(req.params.id);
+  if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
+  if (!s.is_public && s.owner_id !== req.user.id) return res.status(403).json({ ok: false, error: "This community is private" });
+  await db.prepare("INSERT OR IGNORE INTO server_members (server_id,user_id,joined_at) VALUES (?,?,?)").run(s.id, req.user.id, now());
+  const ch = await db.prepare("SELECT * FROM channels WHERE server_id=? ORDER BY created_at ASC").all(s.id);
+  const owner = publicUser(await db.prepare("SELECT * FROM users WHERE id=?").get(s.owner_id));
+  res.json({ ok: true, server: s, channels: ch, owner });
+});
+
+// POST /api/servers/:id/leave
+router.post("/servers/:id/leave", required, async (req, res) => {
+  await db.prepare("DELETE FROM server_members WHERE server_id=? AND user_id=?").run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -85,7 +126,7 @@ router.post("/channels/:id/messages", required, upload.single("file"), async (re
   const text = String(req.body.text || "").trim().slice(0, 2000);
   let file_url = "", file_type = "";
   if (req.file) {
-    file_url = fileUrl(req, req.file);
+    file_url = await fileUrl(req, req.file);
     file_type = req.file.mimetype.startsWith("video/") ? "video" : "image";
   }
   if (!text && !file_url) return res.status(400).json({ ok: false, error: "Message text or file required" });
