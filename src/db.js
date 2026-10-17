@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS shorts (
   duration REAL DEFAULT 0,
   views INTEGER DEFAULT 0,
   visibility TEXT DEFAULT 'Public',
+  made_for_kids INTEGER DEFAULT 0,
+  location TEXT DEFAULT '',
   created_at BIGINT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS articles (
@@ -196,6 +198,8 @@ if (process.env.PG_MEM === "1") {
     for (const st of splitStatements(schema("SERIAL PRIMARY KEY"))) await pool.query(st);
     try { await pool.query("ALTER TABLE servers ADD COLUMN description TEXT DEFAULT ''"); } catch (e) {}
     try { await pool.query("ALTER TABLE servers ADD COLUMN is_public INTEGER DEFAULT 1"); } catch (e) {}
+    try { await pool.query("ALTER TABLE shorts ADD COLUMN made_for_kids INTEGER DEFAULT 0"); } catch (e) {}
+    try { await pool.query("ALTER TABLE shorts ADD COLUMN location TEXT DEFAULT ''"); } catch (e) {}
     console.log("Postgres schema ready");
   })().catch(e => { console.error("pg schema failed", e); process.exit(1); });
 } else {
@@ -208,6 +212,8 @@ if (process.env.PG_MEM === "1") {
   try { sq.exec("ALTER TABLE users ADD COLUMN banner_url TEXT DEFAULT ''"); } catch (e) {}
   try { sq.exec("ALTER TABLE servers ADD COLUMN description TEXT DEFAULT ''"); } catch (e) {}
   try { sq.exec("ALTER TABLE servers ADD COLUMN is_public INTEGER DEFAULT 1"); } catch (e) {}
+  try { sq.exec("ALTER TABLE shorts ADD COLUMN made_for_kids INTEGER DEFAULT 0"); } catch (e) {}
+  try { sq.exec("ALTER TABLE shorts ADD COLUMN location TEXT DEFAULT ''"); } catch (e) {}
   db = {
     isPg: false,
     prepare(sql) {
