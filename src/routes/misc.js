@@ -9,13 +9,15 @@ const { withCounts } = require("./content");
 
 const router = express.Router();
 
-// GET /api/feed — newest videos + shorts mixed
+// GET /api/feed — newest PUBLIC videos + shorts mixed (own Unlisted/Private also visible to owner)
 router.get("/feed", optional, async (req, res) => {
   const me = req.user && req.user.id;
   const limit = Math.min(parseInt(req.query.limit) || 40, 100);
-  const videos = await Promise.all((await db.prepare("SELECT * FROM videos ORDER BY created_at DESC LIMIT ?").all(limit))
+  const visFilter = me ? "(visibility='Public' OR user_id=?)" : "visibility='Public'";
+  const visParams = me ? [me] : [];
+  const videos = await Promise.all((await db.prepare(`SELECT * FROM videos WHERE ${visFilter} ORDER BY created_at DESC LIMIT ?`).all(...visParams, limit))
     .map(async v => ({ kind: "video", ...await withCounts(v, "video", me) })));
-  const shorts = await Promise.all((await db.prepare("SELECT * FROM shorts ORDER BY created_at DESC LIMIT ?").all(limit))
+  const shorts = await Promise.all((await db.prepare(`SELECT * FROM shorts WHERE ${visFilter} ORDER BY created_at DESC LIMIT ?`).all(...visParams, limit))
     .map(async s => ({ kind: "short", ...await withCounts(s, "short", me) })));
   const feed = [...videos, ...shorts].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
   res.json({ ok: true, feed });
@@ -27,8 +29,10 @@ router.get("/search", optional, async (req, res) => {
   if (!q) return res.json({ ok: true, videos: [], shorts: [], users: [] });
   const like = "%" + q + "%";
   const me = req.user && req.user.id;
-  const videos = await Promise.all((await db.prepare("SELECT * FROM videos WHERE title LIKE ? OR description LIKE ? ORDER BY views DESC LIMIT 25").all(like, like)).map(async v => await withCounts(v, "video", me)));
-  const shorts = await Promise.all((await db.prepare("SELECT * FROM shorts WHERE caption LIKE ? ORDER BY created_at DESC LIMIT 25").all(like)).map(async s => await withCounts(s, "short", me)));
+  const visFilter = me ? "(visibility='Public' OR user_id=?)" : "visibility='Public'";
+  const visParams = me ? [me] : [];
+  const videos = await Promise.all((await db.prepare(`SELECT * FROM videos WHERE (title LIKE ? OR description LIKE ?) AND ${visFilter} ORDER BY views DESC LIMIT 25`).all(like, like, ...visParams)).map(async v => await withCounts(v, "video", me)));
+  const shorts = await Promise.all((await db.prepare(`SELECT * FROM shorts WHERE caption LIKE ? AND ${visFilter} ORDER BY created_at DESC LIMIT 25`).all(like, ...visParams)).map(async s => await withCounts(s, "short", me)));
   const users = (await db.prepare("SELECT * FROM users WHERE name LIKE ? OR handle LIKE ? LIMIT 10").all(like, like)).map(publicUser);
   res.json({ ok: true, videos, shorts, users });
 });
