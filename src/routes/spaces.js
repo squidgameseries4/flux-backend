@@ -70,13 +70,22 @@ router.get("/servers/discover", async (req, res) => {
 
 // POST /api/servers/:id/join — join a public server
 router.post("/servers/:id/join", required, async (req, res) => {
-  const s = await db.prepare("SELECT * FROM servers WHERE id=?").get(req.params.id);
-  if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
-  if (!s.is_public && s.owner_id !== req.user.id) return res.status(403).json({ ok: false, error: "This community is private" });
-  await db.prepare("INSERT OR IGNORE INTO server_members (server_id,user_id,joined_at) VALUES (?,?,?)").run(s.id, req.user.id, now());
-  const ch = await db.prepare("SELECT * FROM channels WHERE server_id=? ORDER BY created_at ASC").all(s.id);
-  const owner = publicUser(await db.prepare("SELECT * FROM users WHERE id=?").get(s.owner_id));
-  res.json({ ok: true, server: s, channels: ch, owner });
+  try {
+    const s = await db.prepare("SELECT * FROM servers WHERE id=?").get(req.params.id);
+    if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
+    if (!s.is_public && s.owner_id !== req.user.id) return res.status(403).json({ ok: false, error: "This community is private" });
+    await db.prepare("INSERT OR IGNORE INTO server_members (server_id,user_id,joined_at) VALUES (?,?,?)").run(s.id, req.user.id, now());
+    const ch = await db.prepare("SELECT * FROM channels WHERE server_id=? ORDER BY created_at ASC").all(s.id);
+    let owner = null;
+    try {
+      const ou = await db.prepare("SELECT * FROM users WHERE id=?").get(s.owner_id);
+      if (ou) owner = publicUser(ou);
+    } catch (e) {}
+    res.json({ ok: true, server: s, channels: ch, owner });
+  } catch (e) {
+    console.error("join error:", e.message);
+    res.status(500).json({ ok: false, error: "Join failed: " + e.message });
+  }
 });
 
 // POST /api/servers/:id/leave
