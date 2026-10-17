@@ -226,8 +226,11 @@ function makePg(pool, isMem) {
       const hadOrIgnore = /INSERT OR IGNORE INTO/i.test(sql);
       text = text.replace(/INSERT OR IGNORE INTO/gi, "INSERT INTO");
       const isInsert = /^\s*insert\s/i.test(sql);
-      if (isInsert && !/returning\s/i.test(sql)) {
+      const noReturningId = /insert\s+(or\s+ignore\s+)?into\s+server_members/i.test(sql);
+      if (isInsert && !noReturningId && !/returning\s/i.test(sql)) {
         text += (hadOrIgnore ? " ON CONFLICT DO NOTHING" : "") + " RETURNING id";
+      } else if (isInsert && noReturningId && hadOrIgnore && !/returning\s/i.test(sql)) {
+        text += " ON CONFLICT DO NOTHING";
       }
       return {
         get: async (...p) => (await pool.query(text, p)).rows[0] || null,
