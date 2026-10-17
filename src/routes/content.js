@@ -77,6 +77,20 @@ router.post("/videos/:id/view", async (req, res) => {
 });
 
 // DELETE /api/videos/:id  (owner only)
+router.patch("/videos/:id", required, async (req, res) => {
+  const v = await db.prepare("SELECT * FROM videos WHERE id=?").get(req.params.id);
+  if (!v) return res.status(404).json({ ok: false, error: "Video not found" });
+  if (v.user_id !== req.user.id) return res.status(403).json({ ok: false, error: "Not your video" });
+  const title = String(req.body.title || "").trim().slice(0, 100);
+  const description = String(req.body.description || "").trim().slice(0, 2000);
+  const visibility = ["Public", "Unlisted", "Private"].includes(req.body.visibility) ? req.body.visibility : v.visibility;
+  const kids = req.body.made_for_kids === undefined ? v.made_for_kids : (req.body.made_for_kids ? 1 : 0);
+  const location = String(req.body.location || "").trim().slice(0, 60);
+  await db.prepare("UPDATE videos SET title=?, description=?, visibility=?, made_for_kids=?, location=? WHERE id=?")
+    .run(title || v.title, description, visibility, kids, location, v.id);
+  res.json({ ok: true });
+});
+
 router.delete("/videos/:id", required, async (req, res) => {
   const v = await db.prepare("SELECT * FROM videos WHERE id=?").get(req.params.id);
   if (!v) return res.status(404).json({ ok: false, error: "Video not found" });
@@ -132,6 +146,20 @@ router.post("/shorts/:id/view", async (req, res) => {
 });
 
 // DELETE /api/shorts/:id (owner only)
+router.patch("/shorts/:id", required, async (req, res) => {
+  const s = await db.prepare("SELECT * FROM shorts WHERE id=?").get(req.params.id);
+  if (!s) return res.status(404).json({ ok: false, error: "Short not found" });
+  if (s.user_id !== req.user.id) return res.status(403).json({ ok: false, error: "Not your short" });
+  const caption = String(req.body.caption || "").trim().slice(0, 100);
+  const description = String(req.body.description || "").trim().slice(0, 2000);
+  const visibility = ["Public", "Unlisted", "Private"].includes(req.body.visibility) ? req.body.visibility : s.visibility;
+  const kids = req.body.made_for_kids === undefined ? s.made_for_kids : (req.body.made_for_kids ? 1 : 0);
+  const location = String(req.body.location || "").trim().slice(0, 60);
+  await db.prepare("UPDATE shorts SET caption=?, description=?, visibility=?, made_for_kids=?, location=? WHERE id=?")
+    .run(caption || s.caption, description, visibility, kids, location, s.id);
+  res.json({ ok: true });
+});
+
 router.delete("/shorts/:id", required, async (req, res) => {
   const s = await db.prepare("SELECT * FROM shorts WHERE id=?").get(req.params.id);
   if (!s) return res.status(404).json({ ok: false, error: "Short not found" });
