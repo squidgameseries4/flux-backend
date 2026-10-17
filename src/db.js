@@ -150,6 +150,14 @@ CREATE TABLE IF NOT EXISTS messages (
   file_type TEXT DEFAULT '',
   created_at BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS direct_messages (
+  id ${pk},
+  sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_dm_parties ON direct_messages(sender_id, receiver_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_target ON comments(target_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_likes_target ON likes(target_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_likes_user ON likes(user_id);
