@@ -4,10 +4,9 @@
 
 const express = require("express");
 const crypto = require("crypto");
-const fs = require("fs");
 const db = require("../db");
 const { publicUser } = require("./auth");
-const { UPLOAD_DIR } = require("../uploads");
+const { deleteFile, storageBytes, S3 } = require("../uploads");
 
 const router = express.Router();
 const ADMIN_KEY = process.env.ADMIN_KEY || "flux-admin-123";
@@ -44,12 +43,7 @@ router.get("/admin/stats", adminAuth, async (req, res) => {
     const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
     days.push({ day: d.slice(5), n: byDay[d] || 0 });
   }
-  let storage = 0;
-  try {
-    for (const f of fs.readdirSync(UPLOAD_DIR)) {
-      try { storage += fs.statSync(UPLOAD_DIR + "/" + f).size; } catch (e) { /* ignore */ }
-    }
-  } catch (e) { /* ignore */ }
+  const storage = storageBytes(); // null in cloud mode -> show label instead
   res.json({
     ok: true,
     stats: {
@@ -57,12 +51,14 @@ router.get("/admin/stats", adminAuth, async (req, res) => {
       videos: await count("videos"),
       shorts: await count("shorts"),
       posts: await count("posts"),
+      articles: await count("articles"),
       comments: await count("comments"),
       likes: await count("likes"),
       subscriptions: await count("subscriptions"),
       messages: await count("messages"),
       servers: await count("servers"),
       storage_bytes: storage,
+      storage_mode: S3 ? "cloud" : "local",
       engine: db.isPg ? "postgres" : "sqlite",
     },
     signups_by_day: days,
@@ -112,9 +108,7 @@ router.delete("/admin/videos/:id", adminAuth, async (req, res) => {
   const v = await db.prepare("SELECT * FROM videos WHERE id=?").get(req.params.id);
   if (v) {
     for (const url of [v.file_url, v.thumb_url]) {
-      if (url && url.startsWith("/uploads/")) {
-        try { fs.unlinkSync(UPLOAD_DIR + "/" + url.split("/").pop()); } catch (e) { /* ignore */ }
-      }
+      await deleteFile(url).catch(() => {});
     }
   }
   await db.prepare("DELETE FROM videos WHERE id=?").run(req.params.id);
@@ -135,6 +129,15 @@ router.delete("/admin/shorts/:id", adminAuth, async (req, res) => {
 router.get("/admin/posts", adminAuth, async (req, res) => {
   const { total, rows, limit, offset } = await page("posts", req, "text LIKE ?", "*");
   res.json({ ok: true, total, limit, offset, posts: await Promise.all(rows.map(withAuthor)) });
+});
+// GET /api/admin/articles
+router.get("/admin/articles", adminAuth, async (req, res) => {
+  const { total, rows, limit, offset } = await page("articles", req, "title LIKE ? OR body LIKE ?", "*");
+  res.json({ ok: true, total, limit, offset, articles: await Promise.all(rows.map(withAuthor)) });
+});
+router.delete("/admin/articles/:id", adminAuth, async (req, res) => {
+  await db.prepare("DELETE FROM articles WHERE id=?").run(req.params.id);
+  res.json({ ok: true });
 });
 router.delete("/admin/posts/:id", adminAuth, async (req, res) => {
   await db.prepare("DELETE FROM posts WHERE id=?").run(req.params.id);
