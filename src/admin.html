@@ -80,6 +80,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="navbtn" data-p="videos"><span>🎬</span><span class="t">Videos</span><span class="cnt" id="c-videos"></span></button>
     <button class="navbtn" data-p="shorts"><span>⚡</span><span class="t">Shorts</span><span class="cnt" id="c-shorts"></span></button>
     <button class="navbtn" data-p="posts"><span>📝</span><span class="t">Posts</span><span class="cnt" id="c-posts"></span></button>
+    <button class="navbtn" data-p="articles"><span>📰</span><span class="t">Articles</span><span class="cnt" id="c-articles"></span></button>
     <button class="navbtn" data-p="comments"><span>💬</span><span class="t">Comments</span></button>
     <button class="navbtn" data-p="messages"><span>✉️</span><span class="t">Messages</span></button>
     <div class="foot"><button onclick="logout()">Log out</button></div>
@@ -122,12 +123,12 @@ function enter(){
 async function render(){
   const m=document.getElementById('main');
   if(page==='overview')return vOverview(m);
-  const map={users:['users','u'],videos:['videos','v'],shorts:['shorts','s'],posts:['posts','p'],comments:['comments','c'],messages:['messages','m']};
+  const map={users:['users','u'],videos:['videos','v'],shorts:['shorts','s'],posts:['posts','p'],articles:['articles','a'],comments:['comments','c'],messages:['messages','m']};
   const [ep]=map[page];
   const j=await api(`${ep}?q=${encodeURIComponent(q)}&limit=${LIM}&offset=${off}`);
   if(!j.ok)return;
   const rows=j[ep]||[];
-  const titles={users:'Users',videos:'Videos',shorts:'Shorts',posts:'Posts',comments:'Comments',messages:'Spaces messages'};
+  const titles={users:'Users',videos:'Videos',shorts:'Shorts',posts:'Posts',articles:'Articles',comments:'Comments',messages:'Spaces messages'};
   let h=`<h2>${titles[page]}</h2><div class="panel"><div class="toolbar">
     <input id="sq" placeholder="Search ${titles[page].toLowerCase()}…" value="${esc(q)}"></div>`;
   if(!rows.length)h+='<div class="empty">Nothing here yet.</div>';
@@ -150,6 +151,7 @@ function thead(){
     videos:'<th></th><th>Title</th><th>Author</th><th>Views</th><th>Date</th><th></th>',
     shorts:'<th></th><th>Caption</th><th>Author</th><th>Views</th><th>Date</th><th></th>',
     posts:'<th>Text</th><th>Author</th><th>Likes</th><th>Date</th><th></th>',
+    articles:'<th></th><th>Title</th><th>Type</th><th>Author</th><th>Likes</th><th>Date</th><th></th>',
     comments:'<th>Text</th><th>Author</th><th>On</th><th>Date</th><th></th>',
     messages:'<th>Text</th><th>Author</th><th>File</th><th>Date</th><th></th>'}[page];
 }
@@ -165,6 +167,9 @@ function trow(r){
       <td>${r.views}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
   }
   if(page==='posts')return `<td>${esc(r.text.slice(0,120))}</td><td>${au(r.author)}</td><td>${r.likes??'—'}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
+  if(page==='articles')return `<td>${r.cover_url?`<img class="thumb" src="${esc(r.cover_url)}">`:'<div class="thumb"></div>'}</td>
+    <td>${esc(r.title)}<div class="mut">${esc((r.excerpt||'').slice(0,70))}</div></td><td><span class="mut">${esc(r.ctype||'Article')}</span><div class="mut">${esc(r.category||'')}</div></td><td>${au(r.author)}</td>
+    <td>${r.likes??0}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
   if(page==='comments')return `<td>${esc(r.text.slice(0,120))}</td><td>${au(r.author)}</td><td class="mut">${esc(r.target_type)} #${r.target_id}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
   if(page==='messages')return `<td>${esc((r.text||'').slice(0,120))||'<span class="mut">—</span>'}</td><td>${au(r.author)}</td><td class="mut">${r.file_type||'—'}</td><td class="mut">${dt(r.created_at)}</td><td>${D(r.id)}</td>`;
   return '';
@@ -177,18 +182,18 @@ async function del(kind,id){
 async function vOverview(m){
   const j=await api('stats');if(!j.ok)return;
   const s=j.stats;
-  for(const [k,id] of [['users','c-users'],['videos','c-videos'],['shorts','c-shorts'],['posts','c-posts']]){
+  for(const [k,id] of [['users','c-users'],['videos','c-videos'],['shorts','c-shorts'],['posts','c-posts'],['articles','c-articles']]){
     const e=document.getElementById(id);if(e)e.textContent=s[k];
   }
-  const gb=(s.storage_bytes/1073741824).toFixed(2);
+  const gb=(s.storage_mode==='cloud')?'Cloud':((s.storage_bytes/1073741824).toFixed(2)+' GB');
   const card=(v,l)=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`;
   const max=Math.max(1,...j.signups_by_day.map(d=>d.n));
   m.innerHTML=`<h2>Overview</h2>
-  <div class="cards">${card(s.users,'Users')}${card(s.videos,'Videos')}${card(s.shorts,'Shorts')}${card(s.posts,'Posts')}
-  ${card(s.comments,'Comments')}${card(s.likes,'Likes')}${card(s.subscriptions,'Follows')}${card(s.messages,'Chat msgs')}${card(s.servers,'Servers')}${card(gb+' GB','Storage')}</div>
+  <div class="cards">${card(s.users,'Users')}${card(s.videos,'Videos')}${card(s.shorts,'Shorts')}${card(s.posts,'Posts')}${card(s.articles,'Articles')}
+  ${card(s.comments,'Comments')}${card(s.likes,'Likes')}${card(s.subscriptions,'Follows')}${card(s.messages,'Chat msgs')}${card(s.servers,'Servers')}${card(gb,'Storage')}</div>
   <div class="panel"><h3>New users — last 14 days <span class="mut">· engine: ${esc(s.engine)}</span></h3>
   <div class="bars">${j.signups_by_day.map(d=>`<div class="bar" title="${d.n} users"><div class="fill" style="height:${Math.round(d.n/max*110)}px"></div><div class="d">${d.day}</div></div>`).join('')}</div></div>
-  <div class="panel"><h3>Quick actions</h3><div class="mut">Use the sidebar to browse and moderate users, videos, shorts, posts, comments and Spaces messages. Deleting a user removes everything they made.</div></div>`;
+  <div class="panel"><h3>Quick actions</h3><div class="mut">Use the sidebar to browse and moderate users, videos, shorts, posts, articles, comments and Spaces messages. Deleting a user removes everything they made.</div></div>`;
 }
 document.getElementById('key').onkeydown=e=>{if(e.key==='Enter')doLogin();};
 if(sessionStorage.getItem('fat'))enter();

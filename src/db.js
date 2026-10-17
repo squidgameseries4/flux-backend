@@ -54,6 +54,19 @@ CREATE TABLE IF NOT EXISTS shorts (
   visibility TEXT DEFAULT 'Public',
   created_at BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS articles (
+  id ${pk},
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  excerpt TEXT DEFAULT '',
+  body TEXT NOT NULL,
+  ctype TEXT DEFAULT 'Article',
+  category TEXT DEFAULT 'General',
+  cover_url TEXT DEFAULT '',
+  likes INTEGER DEFAULT 0,
+  views INTEGER DEFAULT 0,
+  created_at BIGINT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS posts (
   id ${pk},
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -111,7 +124,15 @@ CREATE TABLE IF NOT EXISTS servers (
   id ${pk},
   owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  is_public INTEGER DEFAULT 1,
   created_at BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS server_members (
+  server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  joined_at BIGINT NOT NULL,
+  PRIMARY KEY (server_id, user_id)
 );
 CREATE TABLE IF NOT EXISTS channels (
   id ${pk},
@@ -165,6 +186,8 @@ if (process.env.PG_MEM === "1") {
   db = makePg(pool, false);
   db.ready = (async () => {
     for (const st of splitStatements(schema("SERIAL PRIMARY KEY"))) await pool.query(st);
+    try { await pool.query("ALTER TABLE servers ADD COLUMN description TEXT DEFAULT ''"); } catch (e) {}
+    try { await pool.query("ALTER TABLE servers ADD COLUMN is_public INTEGER DEFAULT 1"); } catch (e) {}
     console.log("Postgres schema ready");
   })().catch(e => { console.error("pg schema failed", e); process.exit(1); });
 } else {
@@ -175,6 +198,8 @@ if (process.env.PG_MEM === "1") {
   sq.exec("PRAGMA journal_mode = WAL;");
   sq.exec(schema("INTEGER PRIMARY KEY AUTOINCREMENT"));
   try { sq.exec("ALTER TABLE users ADD COLUMN banner_url TEXT DEFAULT ''"); } catch (e) {}
+  try { sq.exec("ALTER TABLE servers ADD COLUMN description TEXT DEFAULT ''"); } catch (e) {}
+  try { sq.exec("ALTER TABLE servers ADD COLUMN is_public INTEGER DEFAULT 1"); } catch (e) {}
   db = {
     isPg: false,
     prepare(sql) {

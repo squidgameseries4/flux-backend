@@ -30,6 +30,8 @@ let _s3 = null;
 function s3Client() {
   if (!_s3) {
     const { S3Client } = require("@aws-sdk/client-s3");
+    const { NodeHttpHandler } = require("@smithy/node-http-handler");
+    const https = require("https");
     _s3 = new S3Client({
       region: process.env.S3_REGION || "auto",
       endpoint: process.env.S3_ENDPOINT,
@@ -38,6 +40,12 @@ function s3Client() {
         accessKeyId: process.env.S3_ACCESS_KEY,
         secretAccessKey: process.env.S3_SECRET_KEY,
       },
+      requestHandler: new NodeHttpHandler({
+        httpsAgent: new https.Agent({
+          maxSockets: 50,
+          keepAlive: true,
+        }),
+      }),
     });
   }
   return _s3;
@@ -78,9 +86,11 @@ async function fileUrl(req, file) {
          S3_ACL=public-read so files are readable via friendly URLs. */
       ...(process.env.S3_ACL ? { ACL: process.env.S3_ACL } : {}),
     }));
-    return S3_PUBLIC + "/" + file.filename;
-  } finally {
     try { fs.unlinkSync(file.path); } catch (e) { /* ignore */ }
+    return S3_PUBLIC + "/" + file.filename;
+  } catch (e) {
+    console.error("[S3] upload failed, falling back to local:", e.message);
+    return "/uploads/" + file.filename;
   }
 }
 
