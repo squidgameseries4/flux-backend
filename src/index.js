@@ -29,6 +29,7 @@ app.use("/api", require("./routes/content").router);
 app.use("/api", require("./routes/engage").router);
 app.use("/api", require("./routes/spaces").router);
 app.use("/api", require("./routes/misc").router);
+app.use("/api", require("./routes/dm").router);
 app.use("/api", require("./routes/admin").router);
 
 // multer / upload errors -> clean JSON
