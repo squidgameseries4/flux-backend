@@ -45,15 +45,30 @@ This is a **server** — it must be running for the app to reach it.
 4. The app will connect to `http://192.168.1.5:3000`.
 
 **On the internet (for everyone, 24/7):**
-Deploy free on Render:
+Deploy free on Render + Neon (no credit card needed for either):
 1. Push this folder to a GitHub repo.
-2. Go to https://render.com → New → Web Service → pick your repo.
-3. Build command: `npm install` — Start command: `npm start`.
-4. Add a disk for `/opt/render/project/src/uploads` (1 GB free) so
-   uploaded videos survive restarts, or set `UPLOAD_DIR` to the disk path.
-5. Set env var `JWT_SECRET` to a long random string.
-6. Your backend is now at `https://your-app.onrender.com` — the Flux app
-   connects to that URL.
+2. Database: go to https://neon.tech → sign up free → create a project →
+   copy the **connection string** (looks like `postgresql://...@....neon.tech/...?sslmode=require`).
+   This keeps all accounts and data safe permanently (Neon free: 1 GB storage,
+   100 compute-hours/month, data persists).
+3. Go to https://render.com → New → Web Service → pick your repo.
+4. Build command: `npm install` — Start command: `npm start`.
+5. Set env vars:
+   - `DATABASE_URL` = your Neon connection string (tables are created
+     automatically on first boot)
+   - `JWT_SECRET` = any long random string
+   - `ADMIN_KEY` = your admin dashboard key
+6. Deploy → your backend is now at `https://your-app.onrender.com` — the
+   Flux app connects to that URL.
+
+> Honest free-tier notes (verified Oct 2026): Render's free web service
+> sleeps after 15 min of inactivity, so the first request after idle takes
+> ~1 minute to wake. Its local disk is wiped on every sleep/redeploy, and
+> free services **cannot** attach a persistent disk — so while the database
+> above is safe on Neon, uploaded **video files** will disappear when the
+> service sleeps or redeploys. For videos to survive for real users, the
+> next step is either a paid Render plan ($7/mo Starter) with a disk, or
+> moving uploads to object storage (code change — ask Muse).
 
 > Note: video files are stored on the server's disk (`./uploads`).
 > The database is a single file (`./flux.db`). Back both up if it matters.
@@ -98,6 +113,44 @@ node scripts/seed.js --users 3000
 | `DB_PATH` | `./flux.db` | Where the SQLite file lives |
 | `UPLOAD_DIR` | `./uploads` | Where uploaded videos/images are stored |
 | `MAX_UPLOAD_MB` | `400` | Max upload size in MB |
+
+### Durable media storage (optional, recommended on Render)
+
+Render's free disk is **ephemeral**: every redeploy wipes `./uploads`, so
+videos, thumbnails, avatars and banners disappear (the database is safe now
+that it lives in Postgres, but files don't). Point uploads at a free
+S3-compatible bucket instead — both options below have a free 10 GB tier:
+
+- **Cloudflare R2** (recommended): 10 GB storage + 1M writes + 10M reads per
+  month free, **zero egress fees** — best for a video app, since watching =
+  downloads. [Pricing](https://developers.cloudflare.com/r2/pricing/)
+- **Backblaze B2**: 10 GB storage free, unlimited free uploads, 1 GB of free
+  downloads **per day** — fine while the app is small, but video views can
+  blow past the daily download limit.
+
+Setup (takes ~10 minutes, no code changes needed):
+
+1. Create a bucket (R2: Cloudflare dashboard → R2 → Create bucket;
+   B2: Buckets → Create, keep it private).
+2. Create API credentials: R2 → Manage R2 API Tokens (Object Read & Write on
+   your bucket). B2 → Application Keys → Add (Read and Write, limited to the
+   bucket). Note the endpoint shown (R2: `https://<account>.r2.cloudflarestorage.com`,
+   B2: `https://s3.<region>.backblazeb2.com`).
+3. Make files publicly readable:
+   - **R2**: bucket Settings → Public access → allow (gives you a
+     `https://pub-<hash>.r2.dev` URL, or connect a custom domain). Leave
+     `S3_ACL` unset — R2 rejects ACL headers.
+   - **B2**: keep the bucket private, but add one more env var
+     `S3_ACL=public-read` so uploaded files are readable through the
+     friendly URL `https://f<id>.backblazeb2.com/file/<bucket>`.
+4. On Render → your flux-backend service → **Environment**, add:
+   `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`,
+   `S3_PUBLIC_URL` (the public URL from step 3) — plus `S3_ACL=public-read`
+   if you chose B2 → Save → redeploy.
+5. Upload a video in the app and confirm it survives a Manual Deploy.
+
+Without these vars the server keeps the old behavior (local `./uploads`,
+served at `/uploads/<file>`) — nothing else changes.
 
 ## API overview
 
