@@ -63,7 +63,7 @@ router.get("/servers/discover", async (req, res) => {
   // member counts
   for (const s of rows) {
     const mc = await db.prepare("SELECT COUNT(*) AS n FROM server_members WHERE server_id=?").get(s.id);
-    s.member_count = (mc ? mc.n : 0) + 1; // +1 for owner
+    s.member_count = parseInt(mc ? mc.n : 0, 10) + 1; // +1 for owner
   }
   res.json({ ok: true, servers: rows });
 });
@@ -75,7 +75,7 @@ router.get("/servers/:id", async (req, res) => {
   if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
   const channels = await db.prepare("SELECT id, name, kind FROM channels WHERE server_id=? ORDER BY id").all(s.id);
   const mc = await db.prepare("SELECT COUNT(*) AS n FROM server_members WHERE server_id=?").get(s.id);
-  s.member_count = (mc ? mc.n : 0) + 1; // +1 for owner
+  s.member_count = parseInt(mc ? mc.n : 0, 10) + 1; // +1 for owner
   s.channels = channels;
   res.json({ ok: true, server: s, channels });
 });
