@@ -74,6 +74,11 @@ const upload = multer({
 /* Persist a multer file and return its public URL. Async: in cloud mode the
    temp file is streamed to the bucket (low memory: streams, not buffers). */
 async function fileUrl(req, file) {
+  // Faststart optimization for videos: moves moov atom to front so playback
+  // starts instantly without downloading the whole file (YouTube does this)
+  if (file.mimetype && file.mimetype.startsWith("video/")) {
+    try { await faststart(file.path); } catch (e) { /* keep original on failure */ }
+  }
   if (!S3) return "/uploads/" + file.filename;
   try {
     const { PutObjectCommand } = require("@aws-sdk/client-s3");
@@ -124,6 +129,26 @@ function storageBytes() {
     }
   } catch (e) { /* ignore */ }
   return total;
+}
+
+/* Faststart: rearranges MP4 so metadata (moov) is at the front.
+   Without this, phones must download the ENTIRE file before playback starts.
+   Uses -c copy (no re-encode, just rearrangement — fast). Skips silently if
+   ffmpeg is missing or the file isn't a valid video. */
+function faststart(filePath) {
+  return new Promise((resolve) => {
+    const { execFile } = require("child_process");
+    const tmp = filePath + ".fast.mp4";
+    execFile("ffmpeg", ["-y", "-i", filePath, "-c", "copy", "-movflags", "+faststart", tmp],
+      { timeout: 120000 }, (err) => {
+        if (!err) {
+          try { fs.renameSync(tmp, filePath); } catch (e) {}
+        } else {
+          try { fs.unlinkSync(tmp); } catch (e) {}
+        }
+        resolve();
+      });
+  });
 }
 
 module.exports = { upload, fileUrl, deleteFile, storageBytes, UPLOAD_DIR, S3 };
