@@ -94,8 +94,11 @@ async function fileUrl(req, file) {
     try { fs.unlinkSync(file.path); } catch (e) { /* ignore */ }
     return S3_PUBLIC + "/" + file.filename;
   } catch (e) {
-    console.error("[S3] upload failed, falling back to local:", e.message);
-    return "/uploads/" + file.filename;
+    console.error("[S3] upload failed:", e.message);
+    // NEVER return a broken local URL — fail loudly so the app can retry
+    // instead of storing a URL that will never load.
+    try { fs.unlinkSync(file.path); } catch (e2) { /* ignore */ }
+    throw new Error("Upload to storage failed: " + e.message);
   }
 }
 
