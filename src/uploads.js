@@ -87,9 +87,8 @@ async function fileUrl(req, file) {
       Key: file.filename,
       Body: fs.createReadStream(file.path),
       ContentType: file.mimetype || "application/octet-stream",
-      /* Never send ACL to R2 (it ignores/errors on it); B2 users can set
-         S3_ACL=public-read so files are readable via friendly URLs. */
-      ...(process.env.S3_ACL ? { ACL: process.env.S3_ACL } : {}),
+      /* Default to public-read so media is accessible; override with S3_ACL env var */
+      ACL: process.env.S3_ACL || "public-read",
     }));
     try { fs.unlinkSync(file.path); } catch (e) { /* ignore */ }
     return S3_PUBLIC + "/" + file.filename;
