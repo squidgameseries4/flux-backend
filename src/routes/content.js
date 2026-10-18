@@ -153,6 +153,37 @@ router.get("/shorts/:id", optional, async (req, res) => {
   res.json({ ok: true, short: await withCounts(s, "short", req.user && req.user.id) });
 });
 
+// POST /api/shorts/:id/fix-acl — owner can repair private B2 files (re-upload with public-read)
+router.post("/shorts/:id/fix-acl", required, async (req, res) => {
+  const s = await db.prepare("SELECT * FROM shorts WHERE id=?").get(req.params.id);
+  if (!s) return res.status(404).json({ ok: false, error: "Short not found" });
+  if (s.user_id !== req.user.id) return res.status(403).json({ ok: false, error: "Not your short" });
+  try {
+    const { S3Client, GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
+    const S3_BUCKET = process.env.S3_BUCKET, S3_ENDPOINT = process.env.S3_ENDPOINT;
+    const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY, S3_SECRET_KEY = process.env.S3_SECRET_KEY;
+    const S3_PUBLIC = (process.env.S3_PUBLIC_URL || "").replace(/\/$/, "");
+    if (!S3_BUCKET || !S3_PUBLIC) return res.status(500).json({ ok: false, error: "Storage not configured" });
+    const s3 = new S3Client({ region: "us-east-1", endpoint: S3_ENDPOINT, credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }, forcePathStyle: true });
+    const keyFromUrl = (url) => { try { const u = new URL(url); return u.pathname.replace(/^\//, ""); } catch (e) { return null; } };
+    let fixed = 0;
+    for (const field of ["file_url", "thumb_url"]) {
+      const url = s[field];
+      if (!url || !url.startsWith(S3_PUBLIC)) continue;
+      const key = keyFromUrl(url);
+      if (!key) continue;
+      // Download with credentials (bypasses ACL), re-upload with public-read
+      const obj = await s3.send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: key }));
+      const chunks = [];
+      for await (const c of obj.Body) chunks.push(c);
+      const body = Buffer.concat(chunks);
+      await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: key, Body: body, ContentType: obj.ContentType || "application/octet-stream", ACL: "public-read" }));
+      fixed++;
+    }
+    res.json({ ok: true, fixed });
+  } catch (e) { res.status(500).json({ ok: false, error: "Fix failed: " + e.message }); }
+});
+
 // POST /api/shorts/:id/view
 router.post("/shorts/:id/view", async (req, res) => {
   await db.prepare("UPDATE shorts SET views=views+1 WHERE id=?").run(req.params.id);
