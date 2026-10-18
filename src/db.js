@@ -75,6 +75,18 @@ CREATE TABLE IF NOT EXISTS posts (
   text TEXT NOT NULL,
   created_at BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS jobs (
+  id ${pk},
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'job',
+  title TEXT NOT NULL,
+  company TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  salary TEXT DEFAULT '',
+  job_type TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  created_at BIGINT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS comments (
   id ${pk},
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
