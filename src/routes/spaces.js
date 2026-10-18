@@ -168,7 +168,7 @@ router.post("/channels/:id/messages", required, upload.single("file"), async (re
         const S3_PUBLIC = (process.env.S3_PUBLIC_URL || "").replace(/\/$/, "");
         if (S3_BUCKET && S3_ENDPOINT && S3_ACCESS_KEY && S3_SECRET_KEY && S3_PUBLIC) {
           const s3 = new S3Client({ region: "us-east-1", endpoint: S3_ENDPOINT, credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }, forcePathStyle: true });
-          await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: fn, Body: fs.createReadStream(fp), ContentType: req.file.mimetype }));
+          await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: fn, Body: fs.createReadStream(fp), ContentType: req.file.mimetype, ACL: "public-read" }));
           const b2url = S3_PUBLIC + "/" + fn;
           await db.prepare("UPDATE messages SET file_url=? WHERE id=?").run(b2url, msgId);
         }
