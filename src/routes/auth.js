@@ -55,9 +55,44 @@ router.patch("/me", required, async (req, res) => {
   if (req.body.bio !== undefined) { updates.push("bio=?"); params.push(String(req.body.bio || "").trim().slice(0, 300)); }
   if (req.body.avatar_url !== undefined) { updates.push("avatar_url=?"); params.push(String(req.body.avatar_url || "").trim().slice(0, 500)); }
   if (req.body.banner_url !== undefined) { updates.push("banner_url=?"); params.push(String(req.body.banner_url || "").trim().slice(0, 500)); }
+  if (req.body.handle !== undefined) {
+    let handle = String(req.body.handle || "").trim().slice(0, 40);
+    if (handle && !handle.startsWith("@")) handle = "@" + handle;
+    if (handle) {
+      const exists = await db.prepare("SELECT id FROM users WHERE lower(handle)=lower(?) AND id!=?").get(handle, req.user.id);
+      if (exists) return res.status(409).json({ ok: false, error: "That handle is taken" });
+      updates.push("handle=?"); params.push(handle);
+    }
+  }
   if (updates.length) await db.prepare("UPDATE users SET " + updates.join(", ") + " WHERE id=?").run(...params, req.user.id);
   const user = await db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
   res.json({ ok: true, user: publicUser(user) });
+});
+
+// DELETE /api/me — delete own account and all data (Play Store requirement)
+router.delete("/me", required, async (req, res) => {
+  const uid = req.user.id;
+  try {
+    // Delete user's servers (communities they own)
+    const srvs = await db.prepare("SELECT id FROM servers WHERE owner_id=?").all(uid);
+    for (const s of srvs) {
+      await db.prepare("DELETE FROM messages WHERE channel_id IN (SELECT id FROM channels WHERE server_id=?)").run(s.id);
+      await db.prepare("DELETE FROM channels WHERE server_id=?").run(s.id);
+      await db.prepare("DELETE FROM server_members WHERE server_id=?").run(s.id);
+      await db.prepare("DELETE FROM servers WHERE id=?").run(s.id);
+    }
+    // Delete DMs
+    await db.prepare("DELETE FROM direct_messages WHERE sender_id=? OR receiver_id=?").run(uid, uid);
+    // Delete subscriptions both ways
+    await db.prepare("DELETE FROM subscriptions WHERE subscriber_id=? OR subscribed_to_id=?").run(uid, uid);
+    // Delete jobs/services posted
+    await db.prepare("DELETE FROM jobs WHERE user_id=?").run(uid);
+    // Delete the user (cascades to videos, shorts, comments, likes, etc.)
+    await db.prepare("DELETE FROM users WHERE id=?").run(uid);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: "Delete failed" });
+  }
 });
 
 module.exports = { router, publicUser };
