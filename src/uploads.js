@@ -135,6 +135,23 @@ function storageBytes() {
    Without this, phones must download the ENTIRE file before playback starts.
    Uses -c copy (no re-encode, just rearrangement — fast). Skips silently if
    ffmpeg is missing or the file isn't a valid video. */
+/* Generate a thumbnail from a video file using ffmpeg (1st second frame).
+   Returns the thumbnail file path, or null if generation fails. */
+function genThumb(videoPath) {
+  return new Promise((resolve) => {
+    const { execFile } = require("child_process");
+    const thumbPath = videoPath + ".thumb.jpg";
+    execFile("ffmpeg", ["-y", "-i", videoPath, "-ss", "1", "-vframes", "1", "-q:v", "3", thumbPath],
+      { timeout: 30000 }, (err) => {
+        if (!err) {
+          try { fs.accessSync(thumbPath); resolve(thumbPath); return; } catch (e) {}
+        }
+        try { fs.unlinkSync(thumbPath); } catch (e) {}
+        resolve(null);
+      });
+  });
+}
+
 function faststart(filePath) {
   return new Promise((resolve) => {
     const { execFile } = require("child_process");
@@ -151,4 +168,4 @@ function faststart(filePath) {
   });
 }
 
-module.exports = { upload, fileUrl, deleteFile, storageBytes, UPLOAD_DIR, S3 };
+module.exports = { upload, fileUrl, deleteFile, storageBytes, UPLOAD_DIR, S3, genThumb };
