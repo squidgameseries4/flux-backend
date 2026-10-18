@@ -37,17 +37,6 @@ router.post("/servers", required, async (req, res) => {
   res.status(201).json({ ok: true, server });
 });
 
-// GET /api/servers/:id — server details with channels + member count
-router.get("/servers/:id", async (req, res) => {
-  const s = await db.prepare("SELECT s.*, u.handle AS owner_handle, u.name AS owner_name FROM servers s LEFT JOIN users u ON u.id=s.owner_id WHERE s.id=?").get(req.params.id);
-  if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
-  const channels = await db.prepare("SELECT id, name, kind FROM channels WHERE server_id=? ORDER BY id").all(s.id);
-  const mc = await db.prepare("SELECT COUNT(*) AS n FROM server_members WHERE server_id=?").get(s.id);
-  s.member_count = (mc ? mc.n : 0) + 1; // +1 for owner
-  s.channels = channels;
-  res.json({ ok: true, server: s, channels });
-});
-
 // DELETE /api/servers/:id (owner only)
 router.delete("/servers/:id", required, async (req, res) => {
   const s = await db.prepare("SELECT * FROM servers WHERE id=?").get(req.params.id);
@@ -77,6 +66,18 @@ router.get("/servers/discover", async (req, res) => {
     s.member_count = (mc ? mc.n : 0) + 1; // +1 for owner
   }
   res.json({ ok: true, servers: rows });
+});
+
+// GET /api/servers/:id — server details with channels + member count
+// (must be AFTER /servers/discover so "discover" isn't treated as an id)
+router.get("/servers/:id", async (req, res) => {
+  const s = await db.prepare("SELECT s.*, u.handle AS owner_handle, u.name AS owner_name FROM servers s LEFT JOIN users u ON u.id=s.owner_id WHERE s.id=?").get(req.params.id);
+  if (!s) return res.status(404).json({ ok: false, error: "Server not found" });
+  const channels = await db.prepare("SELECT id, name, kind FROM channels WHERE server_id=? ORDER BY id").all(s.id);
+  const mc = await db.prepare("SELECT COUNT(*) AS n FROM server_members WHERE server_id=?").get(s.id);
+  s.member_count = (mc ? mc.n : 0) + 1; // +1 for owner
+  s.channels = channels;
+  res.json({ ok: true, server: s, channels });
 });
 
 // POST /api/servers/:id/join — join a public server
