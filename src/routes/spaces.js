@@ -147,13 +147,34 @@ router.post("/channels/:id/messages", required, upload.single("file"), async (re
   const text = String(req.body.text || "").trim().slice(0, 2000);
   let file_url = "", file_type = "";
   if (req.file) {
-    file_url = await fileUrl(req, req.file);
+    // Respond FAST with local URL, upload to B2 in background
+    file_url = "/uploads/" + req.file.filename;
     file_type = req.file.mimetype.startsWith("video/") ? "video" : "image";
   }
   if (!text && !file_url) return res.status(400).json({ ok: false, error: "Message text or file required" });
   const r = await db.prepare("INSERT INTO messages (channel_id,user_id,text,file_url,file_type,created_at) VALUES (?,?,?,?,?,?)")
     .run(ch.id, req.user.id, text, file_url, file_type, now());
-  res.status(201).json({ ok: true, message: await withUser(await db.prepare("SELECT * FROM messages WHERE id=?").get(r.lastInsertRowid)) });
+  const msgId = r.lastInsertRowid;
+  res.status(201).json({ ok: true, message: await withUser(await db.prepare("SELECT * FROM messages WHERE id=?").get(msgId)) });
+  // Background: upload to B2 and update URL (keep local file for immediate access)
+  if (req.file) {
+    const fp = req.file.path, fn = req.file.filename;
+    (async () => {
+      try {
+        const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+        const fs = require("fs");
+        const S3_BUCKET = process.env.S3_BUCKET, S3_ENDPOINT = process.env.S3_ENDPOINT;
+        const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY, S3_SECRET_KEY = process.env.S3_SECRET_KEY;
+        const S3_PUBLIC = (process.env.S3_PUBLIC_URL || "").replace(/\/$/, "");
+        if (S3_BUCKET && S3_ENDPOINT && S3_ACCESS_KEY && S3_SECRET_KEY && S3_PUBLIC) {
+          const s3 = new S3Client({ region: "us-east-1", endpoint: S3_ENDPOINT, credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }, forcePathStyle: true });
+          await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: fn, Body: fs.createReadStream(fp), ContentType: req.file.mimetype }));
+          const b2url = S3_PUBLIC + "/" + fn;
+          await db.prepare("UPDATE messages SET file_url=? WHERE id=?").run(b2url, msgId);
+        }
+      } catch (e) { /* keep local URL on failure */ }
+    })();
+  }
 });
 
 // DELETE /api/messages/:id (author only)
