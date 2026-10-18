@@ -6,7 +6,7 @@ const router = express.Router();
 const now = () => Date.now();
 
 // GET /api/jobs — list all jobs & services with poster info
-router.get("/", optional, async (req, res) => {
+router.get("/jobs", optional, async (req, res) => {
   const rows = await db.prepare(`
     SELECT j.*, u.name as poster_name, u.handle as poster_handle
     FROM jobs j JOIN users u ON u.id = j.user_id
@@ -21,7 +21,7 @@ router.get("/", optional, async (req, res) => {
 });
 
 // POST /api/jobs — post a job or service
-router.post("/", required, async (req, res) => {
+router.post("/jobs", required, async (req, res) => {
   const kind = req.body.kind === "service" ? "service" : "job";
   const title = String(req.body.title || "").trim().slice(0, 100);
   if (!title) return res.status(400).json({ ok: false, error: "Title required" });
@@ -38,7 +38,7 @@ router.post("/", required, async (req, res) => {
 });
 
 // DELETE /api/jobs/:id — delete own job/service
-router.delete("/:id", required, async (req, res) => {
+router.delete("/jobs/:id", required, async (req, res) => {
   const j = await db.prepare("SELECT * FROM jobs WHERE id=?").get(req.params.id);
   if (!j) return res.status(404).json({ ok: false, error: "Not found" });
   if (j.user_id !== req.user.id) return res.status(403).json({ ok: false, error: "Not yours" });
