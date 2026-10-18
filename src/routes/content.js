@@ -5,7 +5,7 @@ const express = require("express");
 const db = require("../db");
 const { required, optional } = require("../auth");
 const { publicUser } = require("./auth");
-const { upload, fileUrl, deleteFile } = require("../uploads");
+const { upload, fileUrl, deleteFile, genThumb } = require("../uploads");
 
 const router = express.Router();
 const now = () => Date.now();
@@ -110,12 +110,26 @@ router.post("/shorts", required, upload.fields([{ name: "file", maxCount: 1 }, {
   if (!f) return res.status(400).json({ ok: false, error: "Video file is required" });
   const th = (req.files && req.files.thumbnail && req.files.thumbnail[0]) || null;
   const caption = String(req.body.caption || "Untitled").trim().slice(0, 100);
+  // Auto-generate thumbnail from video if none provided
+  let thumbUrl = "";
+  if (th) {
+    thumbUrl = await fileUrl(req, th);
+  } else {
+    try {
+      const genPath = await genThumb(f.path);
+      if (genPath) {
+        const fakeFile = { path: genPath, filename: f.filename + ".thumb.jpg", mimetype: "image/jpeg" };
+        thumbUrl = await fileUrl(req, fakeFile);
+        try { require("fs").unlinkSync(genPath); } catch (e) {}
+      }
+    } catch (e) {}
+  }
   const r = await db.prepare(`INSERT INTO shorts
     (user_id,caption,description,file_url,thumb_url,duration,visibility,created_at)
     VALUES (?,?,?,?,?,?,?,?)`).run(
     req.user.id, caption,
     String(req.body.description || "").slice(0, 2000),
-    await fileUrl(req, f), th ? await fileUrl(req, th) : "",
+    await fileUrl(req, f), thumbUrl,
     parseFloat(req.body.duration) || 0,
     String(req.body.visibility || "Public").slice(0, 20),
     now()
