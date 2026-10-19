@@ -113,6 +113,28 @@ router.delete("/subscriptions/:userId", required, async (req, res) => {
   res.json({ ok: true, subscribed: false });
 });
 
+// POST /api/subscriptions/by-handle/:handle — subscribe by @handle or display name (fallback when client doesn't know user id)
+router.post("/subscriptions/by-handle/:handle", required, async (req, res) => {
+  const h = String(req.params.handle || "").replace(/^@/, "").toLowerCase();
+  const ch = await db.prepare("SELECT * FROM users WHERE LOWER(REPLACE(handle,'@',''))=? OR LOWER(name)=?").get(h, h);
+  if (!ch) return res.status(404).json({ ok: false, error: "Channel not found" });
+  if (ch.id === req.user.id) return res.status(400).json({ ok: false, error: "You can't subscribe to yourself" });
+  await db.prepare("INSERT OR IGNORE INTO subscriptions (subscriber_id,channel_id,created_at) VALUES (?,?,?)")
+    .run(req.user.id, ch.id, now());
+  const me = await db.prepare("SELECT name FROM users WHERE id=?").get(req.user.id);
+  await notify(ch.id, "subscribe", `${me.name} subscribed to you`, "", "user", req.user.id);
+  res.json({ ok: true, subscribed: true, channel_id: ch.id });
+});
+
+// DELETE /api/subscriptions/by-handle/:handle
+router.delete("/subscriptions/by-handle/:handle", required, async (req, res) => {
+  const h = String(req.params.handle || "").replace(/^@/, "").toLowerCase();
+  const ch = await db.prepare("SELECT * FROM users WHERE LOWER(REPLACE(handle,'@',''))=? OR LOWER(name)=?").get(h, h);
+  if (!ch) return res.status(404).json({ ok: false, error: "Channel not found" });
+  await db.prepare("DELETE FROM subscriptions WHERE subscriber_id=? AND channel_id=?").run(req.user.id, ch.id);
+  res.json({ ok: true, subscribed: false });
+});
+
 // GET /api/subscriptions/me
 router.get("/subscriptions/me", required, async (req, res) => {
   const rows = await db.prepare(`SELECT u.* FROM subscriptions s JOIN users u ON u.id=s.channel_id
