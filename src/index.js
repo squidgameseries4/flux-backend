@@ -25,6 +25,7 @@ app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html"))
 app.get("/privacy", (req, res) => res.sendFile(path.join(__dirname, "privacy.html")));
 
 app.use("/api/auth", require("./routes/auth").router);
+app.use("/api/qbk", require("./routes/qbk").router);
 app.use("/api", require("./routes/content").router);
 app.use("/api", require("./routes/engage").router);
 app.use("/api", require("./routes/spaces").router);
