@@ -180,6 +180,25 @@ CREATE INDEX IF NOT EXISTS idx_videos_user ON videos(user_id);
 CREATE INDEX IF NOT EXISTS idx_shorts_user ON shorts(user_id);
 CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_sub_channel ON subscriptions(channel_id);
+CREATE TABLE IF NOT EXISTS qbk_accounts (
+  id ${pk},
+  name TEXT NOT NULL,
+  gmail TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  plan TEXT,
+  sub_expires BIGINT,
+  created_at BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS qbk_keys (
+  id ${pk},
+  key TEXT NOT NULL UNIQUE,
+  plan TEXT NOT NULL,
+  expires_on BIGINT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'unused',
+  used_by BIGINT,
+  used_at BIGINT,
+  created_at BIGINT NOT NULL
+);
 `;
 }
 
