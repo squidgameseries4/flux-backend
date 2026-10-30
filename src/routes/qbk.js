@@ -143,6 +143,64 @@ router.post("/redeem", requireQbk, async (req, res) => {
   res.json({ ok: true, subscription: subscriptionOf(account) });
 });
 
+/* ---- PC bot signals + remote arm switch ----
+ * The PC bot (running on the member's own machine, logged in as the member)
+ * reports its REAL signals/results here; the portal's AI Bot section reads
+ * them back. bot-state is the portal Start/Stop switch the bot polls:
+ * enabled=true arms auto-trading on the bot side. */
+
+// POST /api/qbk/signals {pair, direction, confidence, duration_sec, stake, kind, result?, net?}
+router.post("/signals", requireQbk, async (req, res) => {
+  const b = req.body || {};
+  const pair = String(b.pair || "").trim().slice(0, 40);
+  const direction = String(b.direction || "").trim().toUpperCase();
+  if (!pair || (direction !== "UP" && direction !== "DOWN"))
+    return res.status(400).json({ ok: false, error: "pair and direction (UP or DOWN) are required" });
+  const kind = b.kind === "result" ? "result" : "signal";
+  const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const dur = num(b.duration_sec);
+  const result = kind === "result" && (b.result === "WIN" || b.result === "LOSS") ? b.result : null;
+  await db.prepare(
+    "INSERT INTO qbk_signals (qid, pair, direction, confidence, duration_sec, stake, kind, result, net, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
+  ).run(req.qbk.qid, pair, direction, num(b.confidence), dur === null ? null : Math.round(dur),
+        num(b.stake), kind, result, kind === "result" ? num(b.net) : null, now());
+  // keep only the latest 50 rows per account
+  await db.prepare(
+    "DELETE FROM qbk_signals WHERE qid=? AND id NOT IN (SELECT id FROM qbk_signals WHERE qid=? ORDER BY id DESC LIMIT 50)"
+  ).run(req.qbk.qid, req.qbk.qid);
+  res.json({ ok: true });
+});
+
+// GET /api/qbk/signals — latest 20 for this account, newest first
+router.get("/signals", requireQbk, async (req, res) => {
+  const rows = await db.prepare(
+    "SELECT pair, direction, confidence, duration_sec, stake, kind, result, net, created_at FROM qbk_signals WHERE qid=? ORDER BY id DESC LIMIT 20"
+  ).all(req.qbk.qid);
+  res.json({
+    ok: true,
+    signals: rows.map(r => ({
+      pair: r.pair, direction: r.direction, confidence: r.confidence,
+      duration_sec: r.duration_sec, stake: r.stake, kind: r.kind,
+      result: r.result, net: r.net, created_at: Number(r.created_at),
+    })),
+  });
+});
+
+// GET /api/qbk/bot-state — {enabled} (default false)
+router.get("/bot-state", requireQbk, async (req, res) => {
+  const row = await db.prepare("SELECT enabled FROM qbk_bot_state WHERE qid=?").get(req.qbk.qid);
+  res.json({ ok: true, enabled: !!(row && Number(row.enabled)) });
+});
+
+// POST /api/qbk/bot-state {enabled} — portal Start/Stop switch
+router.post("/bot-state", requireQbk, async (req, res) => {
+  const enabled = req.body && req.body.enabled ? 1 : 0;
+  const row = await db.prepare("SELECT id FROM qbk_bot_state WHERE qid=?").get(req.qbk.qid);
+  if (row) await db.prepare("UPDATE qbk_bot_state SET enabled=? WHERE qid=?").run(enabled, req.qbk.qid);
+  else await db.prepare("INSERT INTO qbk_bot_state (qid, enabled) VALUES (?,?)").run(req.qbk.qid, enabled);
+  res.json({ ok: true, enabled: !!enabled });
+});
+
 // POST /api/qbk/issue {plan} — admin only, header x-admin-token
 router.post("/issue", async (req, res) => {
   const admin = process.env.QBK_ADMIN_TOKEN;
