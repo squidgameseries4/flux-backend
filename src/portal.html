@@ -3,81 +3,171 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0B1D3A">
 <title>KGF Traders — Member Portal</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#0B1D3A;--green:#00D084;--green-d:#00b574;--ink:#14213a;--mut:#66738c;--line:#e3e8f0;--bg:#f4f6fa;--red:#d92d20;--card:#fff}
-body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:560px;margin:0 auto;padding:0 16px 48px}
-.topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:10}
-.topbar-in{max-width:560px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font-weight:800;font-size:19px;letter-spacing:.3px}
+:root{
+  --navy:#0B1D3A;--navy2:#10294e;--green:#00D084;--green-d:#00b574;--green-x:#05603a;--tint:#e9fbf3;
+  --ink:#14213a;--mut:#5d6b84;--line:#e2e8f1;--bg:#f3f5f9;--red:#d92d20;--redtint:#fef1f0;--card:#fff;
+  --shadow:0 1px 2px rgba(11,29,58,.05),0 10px 30px rgba(11,29,58,.06);
+}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px}
+::selection{background:rgba(0,208,132,.25)}
+
+/* ---------- header ---------- */
+.topbar{background:linear-gradient(120deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;position:sticky;top:0;z-index:10;border-bottom:3px solid var(--green);box-shadow:0 2px 14px rgba(11,29,58,.25)}
+.topbar-in{max-width:1060px;margin:0 auto;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brandbox{display:flex;align-items:center;gap:12px;min-width:0}
+.logomark{flex:none;width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),#00b574);color:#06281b;font-weight:900;font-size:13px;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,208,132,.35)}
+.brand{font-weight:800;font-size:19px;letter-spacing:.3px;line-height:1.1;white-space:nowrap}
 .brand span{color:var(--green)}
-.who{display:flex;align-items:center;gap:10px;min-width:0}
-.who .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.btn{display:inline-block;border:0;border-radius:10px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;background:var(--green);color:#06281b;transition:background .15s}
+.brandsub{font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.62);margin-top:3px}
+.who{display:flex;align-items:center;gap:11px;min-width:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 6px 5px 7px}
+.avatar{flex:none;width:32px;height:32px;border-radius:50%;background:rgba(0,208,132,.22);display:flex;align-items:center;justify-content:center}
+.who .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px 56px}
+.loading{text-align:center;color:var(--mut);padding:70px 0;font-size:15px;animation:loadpulse 1.4s ease-in-out infinite}
+@keyframes loadpulse{0%,100%{opacity:.45}50%{opacity:1}}
+.pagehead{padding:30px 0 4px}
+.pagehead h1{font-size:27px;line-height:1.2;letter-spacing:-.2px}
+.pagehead p{color:var(--mut);font-size:14.5px;margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px}
+.grid2 .card{margin-top:0}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;margin-top:20px;box-shadow:var(--shadow)}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.card h2{font-size:17px;font-weight:800;letter-spacing:-.1px}
+.card .sub{color:var(--mut);font-size:13.5px;margin-bottom:14px;line-height:1.55}
+.card .sub:last-child{margin-bottom:0}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;min-height:48px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;background:var(--green);color:#06281b;transition:background .15s,box-shadow .15s,transform .05s;font-family:inherit}
 .btn:hover{background:var(--green-d)}
-.btn:disabled{opacity:.55;cursor:wait}
-.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);padding:8px 14px;font-size:13px}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:disabled:hover{background:var(--green)}
+.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);min-height:40px;padding:8px 15px;font-size:13px;border-radius:999px}
+.btn.ghost:hover{background:rgba(255,255,255,.12)}
+.btn.ghost:disabled:hover{background:transparent}
 .btn.block{width:100%}
-.hero{padding:26px 0 6px;text-align:center}
-.hero h1{font-size:24px;line-height:1.25}
-.hero p{color:var(--mut);font-size:14.5px;margin-top:8px;line-height:1.5}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:16px;box-shadow:0 1px 3px rgba(11,29,58,.05)}
-.card h2{font-size:17px;margin-bottom:4px}
-.card .sub{color:var(--mut);font-size:13px;margin-bottom:14px;line-height:1.5}
-.tabs{display:flex;background:#eef1f6;border-radius:12px;padding:4px;margin-bottom:18px}
-.tabs button{flex:1;border:0;background:transparent;padding:10px;border-radius:9px;font-size:15px;font-weight:700;color:var(--mut);cursor:pointer}
-.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(11,29,58,.15)}
-label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
-input,select{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;background:#fff;color:var(--ink);outline:none}
-input:focus,select:focus{border-color:var(--green)}
-.msg{border-radius:10px;padding:11px 13px;font-size:14px;line-height:1.45;margin-top:14px;display:none}
-.msg.err{display:block;background:#fef1f0;color:var(--red);border:1px solid #fbd9d5}
-.msg.ok{display:block;background:#e9fbf3;color:#05603a;border:1px solid #b8ecd4}
-.msg.note{display:block;background:#fff8e6;color:#7a5b00;border:1px solid #f3dfa0}
-form .btn{margin-top:20px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
-.stat{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:13px 14px}
-.stat .k{font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.stat .v{font-size:17px;font-weight:800;margin-top:4px;word-break:break-word}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;vertical-align:middle}
-.pill.on{background:#e9fbf3;color:#05603a}
-.pill.off{background:#eef1f6;color:var(--mut)}
-.rowline{display:flex;gap:10px}
-.rowline>*{flex:1}
-.entries{margin-top:14px}
-.entry{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
-.entry .l{min-width:0}
-.entry .l b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.entry .l small{color:var(--mut)}
-.entry .r{text-align:right;flex:none}
-.entry .r b{display:block}
-.win{color:#05603a}.loss{color:var(--red)}
-.del{background:none;border:0;color:var(--mut);font-size:12px;cursor:pointer;padding:2px 0 0}
-.empty{color:var(--mut);font-size:14px;padding:14px 0 2px;text-align:center}
-.botcircle{width:86px;height:86px;border-radius:50%;margin:8px auto 10px;display:flex;align-items:center;justify-content:center;background:#eef1f6;border:3px solid #d4dae4;color:var(--mut);font-weight:800;font-size:11.5px;letter-spacing:.6px;text-align:center;padding:8px}
-.botcircle.active{background:#e9fbf3;border-color:var(--green);color:#05603a}
-.botcircle.analyzing{background:#e9fbf3;border-color:var(--green);color:#05603a;animation:botpulse 1.1s ease-in-out infinite}
-@keyframes botpulse{0%,100%{box-shadow:0 0 0 0 rgba(0,208,132,.45)}50%{box-shadow:0 0 0 15px rgba(0,208,132,0)}}
-.botstatus{text-align:center;font-size:14.5px;font-weight:700}
-.btnrow{display:flex;gap:10px;margin-top:14px}
-.btnrow .btn{flex:1}
 .btn.stopbtn{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
 .btn.stopbtn:hover{background:#f1f4f9}
+.btn.stopbtn:disabled:hover{background:#fff}
+button:focus-visible,a:focus-visible{outline:2px solid var(--green-d);outline-offset:2px}
+
+/* ---------- auth ---------- */
+.authwrap{max-width:460px;margin:0 auto}
+.authlogo{width:60px;height:60px;border-radius:17px;font-size:17px;margin:38px auto 0}
+.authhero{text-align:center;padding:18px 0 2px}
+.authhero h1{font-size:26px;line-height:1.25;letter-spacing:-.2px}
+.authhero p{color:var(--mut);font-size:14.5px;margin-top:9px;line-height:1.55}
+.tabs{display:flex;background:#edf1f7;border-radius:12px;padding:4px;margin-bottom:20px}
+.tabs button{flex:1;border:0;background:transparent;min-height:44px;padding:10px;border-radius:9px;font-size:15px;font-weight:700;color:var(--mut);cursor:pointer;font-family:inherit;transition:background .15s,color .15s}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(11,29,58,.16)}
+form .btn{margin-top:22px}
+
+/* ---------- forms ---------- */
+label{display:block;font-size:13px;font-weight:600;margin:16px 0 7px;color:var(--ink)}
+form>label:first-of-type{margin-top:4px}
+input,select{width:100%;min-height:48px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:15px;background:#fff;color:var(--ink);outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+input::placeholder{color:#9aa7bc}
+input:focus,select:focus{border-color:var(--green-d);box-shadow:0 0 0 3px rgba(0,208,132,.16)}
+.msg{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.45;margin-top:16px;display:none}
+.msg.err{display:block;background:var(--redtint);color:var(--red);border:1px solid #fbd9d5}
+.msg.ok{display:block;background:var(--tint);color:var(--green-x);border:1px solid #b8ecd4}
+.msg.note{display:block;background:#fff8e6;color:#7a5b00;border:1px solid #f3dfa0}
+.rowline{display:flex;gap:12px}
+.rowline>*{flex:1;min-width:0}
+
+/* ---------- plan / stats ---------- */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill.on{background:var(--tint);color:var(--green-x)}
+.pill.on::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.pill.off{background:#eef1f6;color:var(--mut)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.stat{background:linear-gradient(180deg,#f8fafc,#f4f7fb);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .k{font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+.stat .v{font-size:17.5px;font-weight:800;margin-top:5px;word-break:break-word;font-variant-numeric:tabular-nums}
+
+/* ---------- AI bot ---------- */
+.botlayout{display:grid;grid-template-columns:1fr;gap:6px}
+.botmain{text-align:center}
+.botcircle{width:120px;height:120px;border-radius:50%;margin:10px auto 14px;display:flex;align-items:center;justify-content:center;background:#eef1f6;border:4px solid #d4dae4;color:var(--mut);font-weight:800;font-size:13px;letter-spacing:1px;text-align:center;padding:10px;transition:border-color .3s,background .3s,color .3s}
+.botcircle.active{background:var(--tint);border-color:var(--green);color:var(--green-x);box-shadow:0 0 0 7px rgba(0,208,132,.13),0 8px 22px rgba(0,208,132,.18)}
+.botcircle.analyzing{background:var(--tint);border-color:var(--green);color:var(--green-x);animation:botpulse 1.15s ease-in-out infinite}
+@keyframes botpulse{0%,100%{box-shadow:0 0 0 0 rgba(0,208,132,.45)}50%{box-shadow:0 0 0 19px rgba(0,208,132,0)}}
+.botstatus{text-align:center;font-size:16.5px;font-weight:800}
+.botmain .sub{text-align:center}
+.btnrow{display:flex;gap:12px;margin-top:16px}
+.btnrow .btn{flex:1}
+.botexplain{text-align:left;margin-top:14px}
+.feedtitle{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);margin:18px 0 2px;padding-bottom:2px}
+
+/* ---------- activity lists (signals + journal) ---------- */
+.entries{margin-top:6px}
+.entry{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 2px;border-top:1px solid var(--line);font-size:14px}
+.entry .l{min-width:0}
+.entry .l b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry .l small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px;font-variant-numeric:tabular-nums}
+.entry .r{text-align:right;flex:none}
+.entry .r b{display:block;font-size:14.5px;font-variant-numeric:tabular-nums}
+.entry .r small{font-variant-numeric:tabular-nums}
+.win{color:var(--green-x)}.loss{color:var(--red)}
+#sigList .entry .r b{display:inline-block;padding:4px 11px;border-radius:999px;font-size:12.5px;font-weight:800;letter-spacing:.3px}
+#sigList .entry .r b.win{background:var(--tint)}
+#sigList .entry .r b.loss{background:var(--redtint)}
+#sigList .sigdir.up{background:var(--tint)}
+#sigList .sigdir.down{background:var(--redtint)}
+#sigList .entry .r small{display:block;margin-top:5px;font-size:12.5px;font-weight:600}
 .sigdir{font-weight:800}
-.sigdir.up{color:#05603a}.sigdir.down{color:var(--red)}
-.foot{text-align:center;color:var(--mut);font-size:12.5px;margin-top:28px;line-height:1.6}
-.loading{text-align:center;color:var(--mut);padding:44px 0;font-size:15px}
-@media (max-width:420px){.stats{grid-template-columns:1fr 1fr}.who .nm{max-width:100px}}
+.sigdir.up{color:var(--green-x)}.sigdir.down{color:var(--red)}
+.del{background:none;border:0;color:var(--mut);font-size:12px;font-weight:600;cursor:pointer;padding:5px 0 0;font-family:inherit}
+.del:hover{color:var(--red);text-decoration:underline}
+.empty{color:var(--mut);font-size:14px;padding:16px 6px 4px;text-align:center;line-height:1.55}
+
+.foot{text-align:center;color:var(--mut);font-size:12.5px;margin-top:30px;line-height:1.65}
+
+/* ---------- desktop ---------- */
+@media (min-width:920px){
+  .grid2{grid-template-columns:1fr 1fr}
+  .botlayout{grid-template-columns:302px 1fr;gap:30px}
+  .botfeed{border-left:1px solid var(--line);padding-left:30px}
+  .feedtitle{margin-top:4px}
+  .stats.jstats{grid-template-columns:repeat(4,1fr)}
+}
+/* ---------- small screens ---------- */
+@media (max-width:480px){
+  .wrap{padding:0 14px 48px}
+  .topbar-in{padding:11px 14px}
+  .brand{font-size:17px}
+  .who .nm{max-width:96px}
+  .card{padding:20px 18px}
+  .pagehead h1{font-size:24px}
+  .btnrow .btn{min-height:50px}
+}
+@media (prefers-reduced-motion:reduce){
+  .botcircle.analyzing,.loading{animation:none}
+  .btn,.tabs button,input,select{transition:none}
+}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-in">
-    <div class="brand">KGF <span>Traders</span></div>
+    <div class="brandbox">
+      <div class="logomark" aria-hidden="true">KGF</div>
+      <div>
+        <div class="brand">KGF <span>Traders</span></div>
+        <div class="brandsub">Member Portal</div>
+      </div>
+    </div>
     <div class="who" id="whoBox" style="display:none">
+      <span class="avatar" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="#00D084"/><path d="M4 20c1.4-3.6 4.4-5.4 8-5.4s6.6 1.8 8 5.4" stroke="#00D084" stroke-width="2.2" stroke-linecap="round"/></svg></span>
       <span class="nm" id="whoName"></span>
       <button class="btn ghost" id="logoutBtn" type="button">Log out</button>
     </div>
@@ -90,85 +180,106 @@ form .btn{margin-top:20px}
 
   <!-- ============ AUTH ============ -->
   <div id="authView" style="display:none">
-    <div class="hero">
-      <h1>Member access</h1>
-      <p>Sign up with your Gmail, then redeem your one-time key inside.<br>After that, just log in — on any device.</p>
-    </div>
-    <div class="card">
-      <div class="tabs">
-        <button id="tabLogin" type="button">Log in</button>
-        <button id="tabSignup" class="on" type="button">Sign up</button>
+    <div class="authwrap">
+      <div class="logomark authlogo" aria-hidden="true">KGF</div>
+      <div class="authhero">
+        <h1>Member access</h1>
+        <p>Sign up with your Gmail, then redeem your one-time key inside.<br>After that, just log in — on any device.</p>
       </div>
+      <div class="card">
+        <div class="tabs">
+          <button id="tabLogin" type="button">Log in</button>
+          <button id="tabSignup" class="on" type="button">Sign up</button>
+        </div>
 
-      <form id="signupForm" autocomplete="on">
-        <label for="suName">Your name</label>
-        <input id="suName" type="text" placeholder="e.g. Ahmed Khan" autocomplete="name" required>
-        <label for="suGmail">Gmail address</label>
-        <input id="suGmail" type="email" placeholder="you@gmail.com" autocomplete="email" required>
-        <label for="suPass">Password</label>
-        <input id="suPass" type="password" placeholder="At least 6 characters" autocomplete="new-password" required>
-        <div class="msg" id="suMsg"></div>
-        <button class="btn block" id="suBtn" type="submit">Create account &amp; open portal</button>
-      </form>
+        <form id="signupForm" autocomplete="on">
+          <label for="suName">Your name</label>
+          <input id="suName" type="text" placeholder="e.g. Ahmed Khan" autocomplete="name" required>
+          <label for="suGmail">Gmail address</label>
+          <input id="suGmail" type="email" placeholder="you@gmail.com" autocomplete="email" required>
+          <label for="suPass">Password</label>
+          <input id="suPass" type="password" placeholder="At least 6 characters" autocomplete="new-password" required>
+          <div class="msg" id="suMsg"></div>
+          <button class="btn block" id="suBtn" type="submit">Create account &amp; open portal</button>
+        </form>
 
-      <form id="loginForm" style="display:none" autocomplete="on">
-        <label for="liGmail">Gmail address</label>
-        <input id="liGmail" type="email" placeholder="you@gmail.com" autocomplete="email" required>
-        <label for="liPass">Password</label>
-        <input id="liPass" type="password" placeholder="Your password" autocomplete="current-password" required>
-        <div class="msg" id="liMsg"></div>
-        <button class="btn block" id="liBtn" type="submit">Log in &amp; open portal</button>
-      </form>
+        <form id="loginForm" style="display:none" autocomplete="on">
+          <label for="liGmail">Gmail address</label>
+          <input id="liGmail" type="email" placeholder="you@gmail.com" autocomplete="email" required>
+          <label for="liPass">Password</label>
+          <input id="liPass" type="password" placeholder="Your password" autocomplete="current-password" required>
+          <div class="msg" id="liMsg"></div>
+          <button class="btn block" id="liBtn" type="submit">Log in &amp; open portal</button>
+        </form>
+      </div>
+      <p class="foot">Your key is redeemed once, inside your account —<br>your plan then stays attached to your Gmail.</p>
     </div>
-    <p class="foot">Your key is redeemed once, inside your account —<br>your plan then stays attached to your Gmail.</p>
   </div>
 
   <!-- ============ PORTAL ============ -->
   <div id="portalView" style="display:none">
-    <div class="hero" style="text-align:left;padding-bottom:0">
+    <div class="pagehead">
       <h1 id="greet">Welcome</h1>
       <p>Your KGF Traders account and plan.</p>
     </div>
 
-    <div class="card">
-      <h2>My Plan <span class="pill off" id="planPill">No plan</span></h2>
-      <p class="sub">Your current subscription on this account.</p>
-      <div class="stats">
-        <div class="stat"><div class="k">Plan</div><div class="v" id="stPlan">No active plan</div></div>
-        <div class="stat"><div class="k">Status</div><div class="v" id="stStatus">—</div></div>
-        <div class="stat"><div class="k">Days left</div><div class="v" id="stDays">—</div></div>
-        <div class="stat"><div class="k">Trades / day</div><div class="v" id="stTrades">—</div></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="cardhead">
+          <h2>My Plan</h2>
+          <span class="pill off" id="planPill">No plan</span>
+        </div>
+        <p class="sub">Your current subscription on this account.</p>
+        <div class="stats">
+          <div class="stat"><div class="k">Plan</div><div class="v" id="stPlan">No active plan</div></div>
+          <div class="stat"><div class="k">Status</div><div class="v" id="stStatus">—</div></div>
+          <div class="stat"><div class="k">Days left</div><div class="v" id="stDays">—</div></div>
+          <div class="stat"><div class="k">Trades / day</div><div class="v" id="stTrades">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardhead">
+          <h2>Redeem a key</h2>
+        </div>
+        <p class="sub">Enter the license key you received. Each key works <b>one time only</b> and attaches the plan to this account.</p>
+        <form id="redeemForm">
+          <label for="keyInput">License key</label>
+          <input id="keyInput" type="text" placeholder="QBK-…" autocomplete="off" spellcheck="false" required>
+          <div class="msg" id="rdMsg"></div>
+          <button class="btn block" id="rdBtn" type="submit">Redeem key</button>
+        </form>
       </div>
     </div>
 
     <div class="card">
-      <h2>AI Bot</h2>
+      <div class="cardhead">
+        <h2>AI Bot</h2>
+      </div>
       <p class="sub">Your KGF Traders PC bot, live. The circle and feed below show what your bot is really doing on your PC — nothing here is simulated.</p>
-      <div class="botcircle" id="botCircle">OFFLINE</div>
-      <div class="botstatus" id="botStatus">Bot offline</div>
-      <p class="sub" style="text-align:center;margin:6px 0 0" id="botStateNote">Loading the switch…</p>
-      <div class="btnrow">
-        <button class="btn" id="botStartBtn" type="button">Start</button>
-        <button class="btn stopbtn" id="botStopBtn" type="button">Stop</button>
+      <div class="botlayout">
+        <div class="botmain">
+          <div class="botcircle" id="botCircle">OFFLINE</div>
+          <div class="botstatus" id="botStatus">Bot offline</div>
+          <p class="sub" id="botStateNote">Loading the switch…</p>
+          <div class="btnrow">
+            <button class="btn" id="botStartBtn" type="button">Start</button>
+            <button class="btn stopbtn" id="botStopBtn" type="button">Stop</button>
+          </div>
+          <p class="sub botexplain">Your PC bot will start auto-trading when it is running and connected. The bot checks this switch every ~30 seconds.</p>
+          <div class="msg" id="botMsg"></div>
+        </div>
+        <div class="botfeed">
+          <h3 class="feedtitle">Signal feed</h3>
+          <div class="entries" id="sigList"><div class="empty">No signals yet — start the bot on your PC; its real signals will appear here.</div></div>
+        </div>
       </div>
-      <p class="sub" style="margin-top:10px;margin-bottom:0">Your PC bot will start auto-trading when it is running and connected. The bot checks this switch every ~30 seconds.</p>
-      <div class="msg" id="botMsg"></div>
-      <div class="entries" id="sigList"><div class="empty">No signals yet — start the bot on your PC; its real signals will appear here.</div></div>
     </div>
 
     <div class="card">
-      <h2>Redeem a key</h2>
-      <p class="sub">Enter the license key you received. Each key works <b>one time only</b> and attaches the plan to this account.</p>
-      <form id="redeemForm">
-        <label for="keyInput">License key</label>
-        <input id="keyInput" type="text" placeholder="QBK-…" autocomplete="off" spellcheck="false" required>
-        <div class="msg" id="rdMsg"></div>
-        <button class="btn block" id="rdBtn" type="submit">Redeem key</button>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>Trade Journal</h2>
+      <div class="cardhead">
+        <h2>Trade Journal</h2>
+      </div>
       <p class="sub">Log your trades here. <b>Saved on this device only.</b></p>
       <form id="journalForm">
         <label for="jPair">Pair</label>
@@ -190,7 +301,7 @@ form .btn{margin-top:20px}
         <input id="jAmount" type="number" step="0.01" min="0" placeholder="0.92" required>
         <button class="btn block" type="submit">Add trade</button>
       </form>
-      <div class="stats" style="margin-top:18px">
+      <div class="stats jstats" style="margin-top:20px">
         <div class="stat"><div class="k">Total trades</div><div class="v" id="jtTotal">0</div></div>
         <div class="stat"><div class="k">Win rate</div><div class="v" id="jtRate">—</div></div>
         <div class="stat"><div class="k">Wins / Losses</div><div class="v" id="jtWL">0 / 0</div></div>
