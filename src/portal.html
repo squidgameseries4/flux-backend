@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KGF Traders — Member Portal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0B1D3A;--green:#00D084;--green-d:#00b574;--ink:#14213a;--mut:#66738c;--line:#e3e8f0;--bg:#f4f6fa;--red:#d92d20;--card:#fff}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 48px}
+.topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:10}
+.topbar-in{max-width:560px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-weight:800;font-size:19px;letter-spacing:.3px}
+.brand span{color:var(--green)}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.who .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.btn{display:inline-block;border:0;border-radius:10px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;background:var(--green);color:#06281b;transition:background .15s}
+.btn:hover{background:var(--green-d)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);padding:8px 14px;font-size:13px}
+.btn.block{width:100%}
+.hero{padding:26px 0 6px;text-align:center}
+.hero h1{font-size:24px;line-height:1.25}
+.hero p{color:var(--mut);font-size:14.5px;margin-top:8px;line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:16px;box-shadow:0 1px 3px rgba(11,29,58,.05)}
+.card h2{font-size:17px;margin-bottom:4px}
+.card .sub{color:var(--mut);font-size:13px;margin-bottom:14px;line-height:1.5}
+.tabs{display:flex;background:#eef1f6;border-radius:12px;padding:4px;margin-bottom:18px}
+.tabs button{flex:1;border:0;background:transparent;padding:10px;border-radius:9px;font-size:15px;font-weight:700;color:var(--mut);cursor:pointer}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(11,29,58,.15)}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+input,select{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus{border-color:var(--green)}
+.msg{border-radius:10px;padding:11px 13px;font-size:14px;line-height:1.45;margin-top:14px;display:none}
+.msg.err{display:block;background:#fef1f0;color:var(--red);border:1px solid #fbd9d5}
+.msg.ok{display:block;background:#e9fbf3;color:#05603a;border:1px solid #b8ecd4}
+.msg.note{display:block;background:#fff8e6;color:#7a5b00;border:1px solid #f3dfa0}
+form .btn{margin-top:20px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.stat{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+.stat .k{font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat .v{font-size:17px;font-weight:800;margin-top:4px;word-break:break-word}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;vertical-align:middle}
+.pill.on{background:#e9fbf3;color:#05603a}
+.pill.off{background:#eef1f6;color:var(--mut)}
+.rowline{display:flex;gap:10px}
+.rowline>*{flex:1}
+.entries{margin-top:14px}
+.entry{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.entry .l{min-width:0}
+.entry .l b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry .l small{color:var(--mut)}
+.entry .r{text-align:right;flex:none}
+.entry .r b{display:block}
+.win{color:#05603a}.loss{color:var(--red)}
+.del{background:none;border:0;color:var(--mut);font-size:12px;cursor:pointer;padding:2px 0 0}
+.empty{color:var(--mut);font-size:14px;padding:14px 0 2px;text-align:center}
+.botcircle{width:86px;height:86px;border-radius:50%;margin:8px auto 10px;display:flex;align-items:center;justify-content:center;background:#eef1f6;border:3px solid #d4dae4;color:var(--mut);font-weight:800;font-size:11.5px;letter-spacing:.6px;text-align:center;padding:8px}
+.botcircle.active{background:#e9fbf3;border-color:var(--green);color:#05603a}
+.botcircle.analyzing{background:#e9fbf3;border-color:var(--green);color:#05603a;animation:botpulse 1.1s ease-in-out infinite}
+@keyframes botpulse{0%,100%{box-shadow:0 0 0 0 rgba(0,208,132,.45)}50%{box-shadow:0 0 0 15px rgba(0,208,132,0)}}
+.botstatus{text-align:center;font-size:14.5px;font-weight:700}
+.btnrow{display:flex;gap:10px;margin-top:14px}
+.btnrow .btn{flex:1}
+.btn.stopbtn{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.btn.stopbtn:hover{background:#f1f4f9}
+.sigdir{font-weight:800}
+.sigdir.up{color:#05603a}.sigdir.down{color:var(--red)}
+.foot{text-align:center;color:var(--mut);font-size:12.5px;margin-top:28px;line-height:1.6}
+.loading{text-align:center;color:var(--mut);padding:44px 0;font-size:15px}
+@media (max-width:420px){.stats{grid-template-columns:1fr 1fr}.who .nm{max-width:100px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">KGF <span>Traders</span></div>
+    <div class="who" id="whoBox" style="display:none">
+      <span class="nm" id="whoName"></span>
+      <button class="btn ghost" id="logoutBtn" type="button">Log out</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="loadingView" class="loading">Loading…</div>
+
+  <!-- ============ AUTH ============ -->
+  <div id="authView" style="display:none">
+    <div class="hero">
+      <h1>Member access</h1>
+      <p>Sign up with your Gmail, then redeem your one-time key inside.<br>After that, just log in — on any device.</p>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        <button id="tabLogin" type="button">Log in</button>
+        <button id="tabSignup" class="on" type="button">Sign up</button>
+      </div>
+
+      <form id="signupForm" autocomplete="on">
+        <label for="suName">Your name</label>
+        <input id="suName" type="text" placeholder="e.g. Ahmed Khan" autocomplete="name" required>
+        <label for="suGmail">Gmail address</label>
+        <input id="suGmail" type="email" placeholder="you@gmail.com" autocomplete="email" required>
+        <label for="suPass">Password</label>
+        <input id="suPass" type="password" placeholder="At least 6 characters" autocomplete="new-password" required>
+        <div class="msg" id="suMsg"></div>
+        <button class="btn block" id="suBtn" type="submit">Create account &amp; open portal</button>
+      </form>
+
+      <form id="loginForm" style="display:none" autocomplete="on">
+        <label for="liGmail">Gmail address</label>
+        <input id="liGmail" type="email" placeholder="you@gmail.com" autocomplete="email" required>
+        <label for="liPass">Password</label>
+        <input id="liPass" type="password" placeholder="Your password" autocomplete="current-password" required>
+        <div class="msg" id="liMsg"></div>
+        <button class="btn block" id="liBtn" type="submit">Log in &amp; open portal</button>
+      </form>
+    </div>
+    <p class="foot">Your key is redeemed once, inside your account —<br>your plan then stays attached to your Gmail.</p>
+  </div>
+
+  <!-- ============ PORTAL ============ -->
+  <div id="portalView" style="display:none">
+    <div class="hero" style="text-align:left;padding-bottom:0">
+      <h1 id="greet">Welcome</h1>
+      <p>Your KGF Traders account and plan.</p>
+    </div>
+
+    <div class="card">
+      <h2>My Plan <span class="pill off" id="planPill">No plan</span></h2>
+      <p class="sub">Your current subscription on this account.</p>
+      <div class="stats">
+        <div class="stat"><div class="k">Plan</div><div class="v" id="stPlan">No active plan</div></div>
+        <div class="stat"><div class="k">Status</div><div class="v" id="stStatus">—</div></div>
+        <div class="stat"><div class="k">Days left</div><div class="v" id="stDays">—</div></div>
+        <div class="stat"><div class="k">Trades / day</div><div class="v" id="stTrades">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>AI Bot</h2>
+      <p class="sub">Your KGF Traders PC bot, live. The circle and feed below show what your bot is really doing on your PC — nothing here is simulated.</p>
+      <div class="botcircle" id="botCircle">OFFLINE</div>
+      <div class="botstatus" id="botStatus">Bot offline</div>
+      <p class="sub" style="text-align:center;margin:6px 0 0" id="botStateNote">Loading the switch…</p>
+      <div class="btnrow">
+        <button class="btn" id="botStartBtn" type="button">Start</button>
+        <button class="btn stopbtn" id="botStopBtn" type="button">Stop</button>
+      </div>
+      <p class="sub" style="margin-top:10px;margin-bottom:0">Your PC bot will start auto-trading when it is running and connected. The bot checks this switch every ~30 seconds.</p>
+      <div class="msg" id="botMsg"></div>
+      <div class="entries" id="sigList"><div class="empty">No signals yet — start the bot on your PC; its real signals will appear here.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Redeem a key</h2>
+      <p class="sub">Enter the license key you received. Each key works <b>one time only</b> and attaches the plan to this account.</p>
+      <form id="redeemForm">
+        <label for="keyInput">License key</label>
+        <input id="keyInput" type="text" placeholder="QBK-…" autocomplete="off" spellcheck="false" required>
+        <div class="msg" id="rdMsg"></div>
+        <button class="btn block" id="rdBtn" type="submit">Redeem key</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Trade Journal</h2>
+      <p class="sub">Log your trades here. <b>Saved on this device only.</b></p>
+      <form id="journalForm">
+        <label for="jPair">Pair</label>
+        <input id="jPair" type="text" placeholder="e.g. EUR/USD OTC" required>
+        <div class="rowline">
+          <div>
+            <label for="jStake">Stake $</label>
+            <input id="jStake" type="number" step="0.01" min="0" placeholder="1.00" required>
+          </div>
+          <div>
+            <label for="jOutcome">Result</label>
+            <select id="jOutcome">
+              <option value="Win">Win</option>
+              <option value="Loss">Loss</option>
+            </select>
+          </div>
+        </div>
+        <label for="jAmount">Result $ (amount won or lost)</label>
+        <input id="jAmount" type="number" step="0.01" min="0" placeholder="0.92" required>
+        <button class="btn block" type="submit">Add trade</button>
+      </form>
+      <div class="stats" style="margin-top:18px">
+        <div class="stat"><div class="k">Total trades</div><div class="v" id="jtTotal">0</div></div>
+        <div class="stat"><div class="k">Win rate</div><div class="v" id="jtRate">—</div></div>
+        <div class="stat"><div class="k">Wins / Losses</div><div class="v" id="jtWL">0 / 0</div></div>
+        <div class="stat"><div class="k">Net result</div><div class="v" id="jtNet">$0.00</div></div>
+      </div>
+      <div class="entries" id="jList"></div>
+    </div>
+
+    <p class="foot">KGF Traders — by Soft Craft Studio<br>Trading involves risk. Trade responsibly.</p>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+var TOKEN_KEY = "kgf_token";
+var JOURNAL_KEY = "kgf_journal";
+var token = localStorage.getItem(TOKEN_KEY) || "";
+var me = null; // {account, subscription}
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]; }); }
+function setMsg(el, text, kind){ el.textContent = text || ""; el.className = "msg" + (text ? " " + kind : ""); }
+
+/* Same-origin API call with short retries for a cold / restarting server. */
+async function api(path, opts){
+  opts = opts || {};
+  var headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = "Bearer " + token;
+  var lastErr = null;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      var res = await fetch(path, { method: opts.method || "GET", headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      return { status: res.status, data: data };
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 2) {
+        if (opts.onRetry) opts.onRetry();
+        await new Promise(function(r){ setTimeout(r, 2000); });
+      }
+    }
+  }
+  throw lastErr || new Error("network");
+}
+
+function showAuth(){
+  $("loadingView").style.display = "none";
+  $("portalView").style.display = "none";
+  $("authView").style.display = "";
+  $("whoBox").style.display = "none";
+}
+function showPortal(){
+  $("loadingView").style.display = "none";
+  $("authView").style.display = "none";
+  $("portalView").style.display = "";
+  $("whoBox").style.display = "";
+  renderPortal();
+  startSignalPolling();
+}
+
+function renderPortal(){
+  if (!me) return;
+  var name = (me.account && me.account.name) || "";
+  $("whoName").textContent = name;
+  $("greet").textContent = name ? ("Welcome, " + name) : "Welcome";
+  var s = me.subscription;
+  var pill = $("planPill");
+  if (!s) {
+    pill.textContent = "No plan"; pill.className = "pill off";
+    $("stPlan").textContent = "No active plan";
+    $("stStatus").textContent = "No plan yet";
+    $("stDays").textContent = "—";
+    $("stTrades").textContent = "—";
+    return;
+  }
+  $("stPlan").textContent = s.plan_name || s.plan || "—";
+  $("stStatus").textContent = s.active ? "Active" : "Expired";
+  pill.textContent = s.active ? "Active" : "Expired";
+  pill.className = "pill " + (s.active ? "on" : "off");
+  if (s.expires_on == null) {
+    $("stDays").textContent = "Lifetime — never expires";
+  } else {
+    var left = Math.max(0, Math.ceil((Number(s.expires_on) - Date.now()) / 86400000));
+    var until = new Date(Number(s.expires_on)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    $("stDays").textContent = left + (left === 1 ? " day" : " days") + " (until " + until + ")";
+  }
+  $("stTrades").textContent = (s.trades_per_day == null) ? "Unlimited trades/day" : (s.trades_per_day + " trades/day");
+}
+
+async function refreshMe(){
+  var r = await api("/api/qbk/me");
+  if (r.status === 200 && r.data && r.data.ok) { me = { account: r.data.account, subscription: r.data.subscription }; return true; }
+  if (r.status === 401) { logout(); return false; }
+  return false;
+}
+
+function logout(){
+  stopSignalPolling();
+  token = "";
+  me = null;
+  localStorage.removeItem(TOKEN_KEY);
+  showAuth();
+}
+$("logoutBtn").addEventListener("click", logout);
+
+/* ---------- auth tabs ---------- */
+function setTab(signup){
+  $("tabSignup").classList.toggle("on", signup);
+  $("tabLogin").classList.toggle("on", !signup);
+  $("signupForm").style.display = signup ? "" : "none";
+  $("loginForm").style.display = signup ? "none" : "";
+  setMsg($("suMsg"), "", ""); setMsg($("liMsg"), "", "");
+}
+$("tabSignup").addEventListener("click", function(){ setTab(true); });
+$("tabLogin").addEventListener("click", function(){ setTab(false); });
+
+$("signupForm").addEventListener("submit", async function(ev){
+  ev.preventDefault();
+  var btn = $("suBtn"), msg = $("suMsg");
+  btn.disabled = true; btn.textContent = "Creating account…"; setMsg(msg, "", "");
+  try {
+    var r = await api("/api/qbk/signup", { method: "POST", body: { name: $("suName").value, gmail: $("suGmail").value, password: $("suPass").value },
+      onRetry: function(){ setMsg(msg, "Waking the server… please wait.", "note"); } });
+    if (r.data && r.data.ok) {
+      token = r.data.token; localStorage.setItem(TOKEN_KEY, token);
+      me = { account: r.data.account, subscription: r.data.subscription };
+      showPortal();
+    } else {
+      setMsg(msg, (r.data && r.data.error) || "Something went wrong — try again.", "err");
+    }
+  } catch (e) {
+    setMsg(msg, "Cannot reach the server — check your internet and try again.", "err");
+  }
+  btn.disabled = false; btn.textContent = "Create account & open portal";
+});
+
+$("loginForm").addEventListener("submit", async function(ev){
+  ev.preventDefault();
+  var btn = $("liBtn"), msg = $("liMsg");
+  btn.disabled = true; btn.textContent = "Logging in…"; setMsg(msg, "", "");
+  try {
+    var r = await api("/api/qbk/login", { method: "POST", body: { gmail: $("liGmail").value, password: $("liPass").value },
+      onRetry: function(){ setMsg(msg, "Waking the server… please wait.", "note"); } });
+    if (r.data && r.data.ok) {
+      token = r.data.token; localStorage.setItem(TOKEN_KEY, token);
+      me = { account: r.data.account, subscription: r.data.subscription };
+      showPortal();
+    } else {
+      setMsg(msg, (r.data && r.data.error) || "Something went wrong — try again.", "err");
+    }
+  } catch (e) {
+    setMsg(msg, "Cannot reach the server — check your internet and try again.", "err");
+  }
+  btn.disabled = false; btn.textContent = "Log in & open portal";
+});
+
+/* ---------- redeem ---------- */
+$("redeemForm").addEventListener("submit", async function(ev){
+  ev.preventDefault();
+  var btn = $("rdBtn"), msg = $("rdMsg");
+  btn.disabled = true; btn.textContent = "Redeeming…"; setMsg(msg, "", "");
+  try {
+    var r = await api("/api/qbk/redeem", { method: "POST", body: { key: $("keyInput").value },
+      onRetry: function(){ setMsg(msg, "Waking the server… please wait.", "note"); } });
+    if (r.data && r.data.ok) {
+      if (me) me.subscription = r.data.subscription;
+      setMsg(msg, "Key redeemed — your " + ((r.data.subscription && r.data.subscription.plan_name) || "plan") + " plan is now active on this account.", "ok");
+      $("keyInput").value = "";
+      await refreshMe();
+      renderPortal();
+    } else {
+      if (r.status === 401) { logout(); return; }
+      setMsg(msg, (r.data && r.data.error) || "Something went wrong — try again.", "err");
+    }
+  } catch (e) {
+    setMsg(msg, "Cannot reach the server — check your internet and try again.", "err");
+  }
+  btn.disabled = false; btn.textContent = "Redeem key";
+});
+
+/* ---------- AI Bot: remote switch + live signal feed ---------- */
+var sigTimer = null;
+var botEnabled = false;
+
+function fmtTime(ms){
+  try { return new Date(Number(ms)).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+  catch (e) { return ""; }
+}
+function money2(n){ var v = Number(n) || 0; return (v < 0 ? "-$" : "$") + Math.abs(v).toFixed(2); }
+
+function renderBotSwitch(){
+  $("botStartBtn").disabled = botEnabled;
+  $("botStopBtn").disabled = !botEnabled;
+  $("botStateNote").textContent = botEnabled
+    ? "Switch is ON — your PC bot may auto-trade while it is running and connected."
+    : "Switch is OFF — your PC bot will not auto-trade.";
+}
+
+async function loadBotState(){
+  try {
+    var r = await api("/api/qbk/bot-state");
+    if (r.status === 401) { logout(); return; }
+    if (r.data && r.data.ok) botEnabled = !!r.data.enabled;
+  } catch (e) { /* keep last known state */ }
+  renderBotSwitch();
+}
+
+async function setBotState(on){
+  var msg = $("botMsg");
+  $("botStartBtn").disabled = true; $("botStopBtn").disabled = true; setMsg(msg, "", "");
+  try {
+    var r = await api("/api/qbk/bot-state", { method: "POST", body: { enabled: on } });
+    if (r.status === 401) { logout(); return; }
+    if (r.data && r.data.ok) {
+      botEnabled = !!r.data.enabled;
+      setMsg(msg, botEnabled ? "Bot started — your PC bot picks this up within ~30 seconds while it is running." : "Bot stopped.", "ok");
+    } else {
+      setMsg(msg, (r.data && r.data.error) || "Something went wrong — try again.", "err");
+    }
+  } catch (e) {
+    setMsg(msg, "Cannot reach the server — check your internet and try again.", "err");
+  }
+  renderBotSwitch();
+}
+$("botStartBtn").addEventListener("click", function(){ setBotState(true); });
+$("botStopBtn").addEventListener("click", function(){ setBotState(false); });
+
+function renderSignals(signals){
+  var nowMs = Date.now();
+  var circle = $("botCircle"), status = $("botStatus");
+  var running = null;
+  var newest = (signals && signals.length) ? signals[0] : null;
+  (signals || []).forEach(function(s){
+    if (!running && s.kind === "signal") {
+      var age = nowMs - Number(s.created_at);
+      if (age >= 0 && age < (Number(s.duration_sec) || 0) * 1000) running = s;
+    }
+  });
+  if (running) {
+    circle.className = "botcircle analyzing"; circle.textContent = "● ● ●";
+    status.textContent = "ANALYZING — " + running.pair;
+  } else if (newest && (nowMs - Number(newest.created_at)) < 10 * 60 * 1000) {
+    circle.className = "botcircle active"; circle.textContent = "ACTIVE";
+    status.textContent = "Bot active";
+  } else {
+    circle.className = "botcircle"; circle.textContent = "OFFLINE";
+    status.textContent = "Bot offline";
+  }
+  var list = $("sigList");
+  if (!signals || !signals.length) {
+    list.innerHTML = '<div class="empty">No signals yet — start the bot on your PC; its real signals will appear here.</div>';
+    return;
+  }
+  list.innerHTML = "";
+  signals.forEach(function(s){
+    var up = s.direction === "UP";
+    var meta = [fmtTime(s.created_at)];
+    if (s.confidence != null) meta.push("Confidence " + Math.round(Number(s.confidence)) + "%");
+    if (s.duration_sec != null) meta.push(Number(s.duration_sec) + "s trade");
+    if (s.stake != null) meta.push("Stake " + money2(s.stake));
+    var right;
+    if (s.kind === "result") {
+      var net = Number(s.net) || 0;
+      var win = s.result === "WIN";
+      right = '<b class="' + (win ? "win" : "loss") + '">' + esc(s.result || "RESULT") + '</b>' +
+        '<small class="' + (win ? "win" : "loss") + '">' + (net > 0 ? "+" : "") + money2(net) + '</small>';
+    } else {
+      right = '<b class="sigdir ' + (up ? "up" : "down") + '">' + (up ? "&#9650; UP" : "&#9660; DOWN") + '</b><small>signal</small>';
+    }
+    var row = document.createElement("div"); row.className = "entry";
+    row.innerHTML = '<div class="l"><b>' + esc(s.pair) + '</b><small>' + esc(meta.join(" · ")) + '</small></div>' +
+      '<div class="r">' + right + '</div>';
+    list.appendChild(row);
+  });
+}
+
+async function pollSignals(){
+  try {
+    var r = await api("/api/qbk/signals");
+    if (r.status === 401) { logout(); return; }
+    if (r.data && r.data.ok) renderSignals(r.data.signals || []);
+  } catch (e) { /* transient — the next poll retries */ }
+}
+function startSignalPolling(){
+  stopSignalPolling();
+  loadBotState();
+  pollSignals();
+  sigTimer = setInterval(pollSignals, 15000);
+}
+function stopSignalPolling(){ if (sigTimer) { clearInterval(sigTimer); sigTimer = null; } }
+
+/* ---------- trade journal (this device only) ---------- */
+function loadJournal(){
+  try { var j = JSON.parse(localStorage.getItem(JOURNAL_KEY) || "[]"); return Array.isArray(j) ? j : []; }
+  catch (e) { return []; }
+}
+function saveJournal(j){ localStorage.setItem(JOURNAL_KEY, JSON.stringify(j)); }
+function money(n){ return (n < 0 ? "-$" : "$") + Math.abs(n).toFixed(2); }
+
+function renderJournal(){
+  var j = loadJournal();
+  var wins = 0, losses = 0, net = 0;
+  j.forEach(function(t){ if (t.outcome === "Win") wins++; else losses++; net += Number(t.result) || 0; });
+  $("jtTotal").textContent = j.length;
+  $("jtWL").textContent = wins + " / " + losses;
+  $("jtRate").textContent = j.length ? Math.round(wins / j.length * 100) + "%" : "—";
+  var netEl = $("jtNet");
+  netEl.textContent = money(net);
+  netEl.className = "v " + (net > 0 ? "win" : net < 0 ? "loss" : "");
+  var list = $("jList");
+  if (!j.length) { list.innerHTML = '<div class="empty">No trades logged yet.</div>'; return; }
+  list.innerHTML = "";
+  j.slice().reverse().forEach(function(t, ri){
+    var idx = j.length - 1 - ri;
+    var row = document.createElement("div"); row.className = "entry";
+    var res = Number(t.result) || 0;
+    row.innerHTML = '<div class="l"><b>' + esc(t.pair) + '</b><small>Stake ' + money(Number(t.stake) || 0) + " · " + esc(t.outcome) + '</small></div>' +
+      '<div class="r"><b class="' + (res >= 0 ? "win" : "loss") + '">' + (res >= 0 ? "+" : "") + money(res) + '</b>' +
+      '<button class="del" type="button">Delete</button></div>';
+    row.querySelector(".del").addEventListener("click", function(){
+      var arr = loadJournal(); arr.splice(idx, 1); saveJournal(arr); renderJournal();
+    });
+    list.appendChild(row);
+  });
+}
+
+$("journalForm").addEventListener("submit", function(ev){
+  ev.preventDefault();
+  var pair = $("jPair").value.trim();
+  var stake = parseFloat($("jStake").value);
+  var amount = parseFloat($("jAmount").value);
+  var outcome = $("jOutcome").value;
+  if (!pair || isNaN(stake) || isNaN(amount)) return;
+  var j = loadJournal();
+  j.push({ pair: pair, stake: stake, outcome: outcome, result: outcome === "Win" ? Math.abs(amount) : -Math.abs(amount), at: Date.now() });
+  saveJournal(j);
+  $("jPair").value = ""; $("jStake").value = ""; $("jAmount").value = "";
+  renderJournal();
+});
+
+/* ---------- boot ---------- */
+(async function boot(){
+  renderJournal();
+  if (!token) { showAuth(); return; }
+  try {
+    var ok = await refreshMe();
+    if (ok) { showPortal(); return; }
+    if (!token) return; // refreshMe already logged out on 401 -> auth shown
+    // network/server trouble: keep the token, fall back to auth with a note
+    showAuth();
+    setTab(false);
+    setMsg($("liMsg"), "Could not reach the server — you may already be logged in on this device. Check your internet and try logging in again.", "note");
+  } catch (e) {
+    showAuth();
+    setTab(false);
+    setMsg($("liMsg"), "Cannot reach the server — check your internet and try again.", "err");
+  }
+})();
+</script>
+</body>
+</html>

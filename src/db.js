@@ -199,6 +199,25 @@ CREATE TABLE IF NOT EXISTS qbk_keys (
   used_at BIGINT,
   created_at BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS qbk_signals (
+  id ${pk},
+  qid BIGINT NOT NULL,
+  pair TEXT NOT NULL,
+  direction TEXT NOT NULL,
+  confidence REAL,
+  duration_sec INTEGER,
+  stake REAL,
+  kind TEXT NOT NULL DEFAULT 'signal',
+  result TEXT,
+  net REAL,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_qbk_signals_qid ON qbk_signals(qid, id);
+CREATE TABLE IF NOT EXISTS qbk_bot_state (
+  id ${pk},
+  qid BIGINT NOT NULL UNIQUE,
+  enabled INTEGER NOT NULL DEFAULT 0
+);
 `;
 }
 
